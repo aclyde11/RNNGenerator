@@ -13,8 +13,8 @@ import os
 def getconfig(args):
     config_ = {
         'epochs': 10,
-        'batch_size': 2,
-        'vocab_size': 23,
+        'batch_size': 512,
+        'vocab_size': 28,
         'emb_size': 32,
         'sample_freq': 1,
         'max_len': 150
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
-    parser.add_argument('--ct', help='continue training for longer', type=bool, action='store_true', default=False)
+    parser.add_argument('--ct', help='continue training for longer', type=bool, default=False)
     args = parser.parse_args()
 
     path = args.logdir
