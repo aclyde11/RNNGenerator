@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.utils.rnn
 import torch.nn.functional as F
-
+from tqdm import tqdm
 
 def getconfig(args):
     config_ = {
@@ -39,12 +39,12 @@ def sample(model, i2c, c2i, temp=1, batch_size=10, max_len=150):
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((2, batch_size, 256))
-        h_0 = torch.zeros((2, batch_size, 256))
-        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size))
+        c_0 = torch.zeros((2, batch_size, 256)).cuda()
+        h_0 = torch.zeros((2, batch_size, 256)).cuda()
+        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).cuda()
 
-        eos_mask = torch.zeros(batch_size, dtype=torch.bool)
-        end_pads = torch.tensor([max_len - 1]).repeat(batch_size)
+        eos_mask = torch.zeros(batch_size, dtype=torch.bool).cuda()
+        end_pads = torch.tensor([max_len - 1]).repeat(batch_size).cuda()
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
             o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
@@ -59,7 +59,7 @@ def sample(model, i2c, c2i, temp=1, batch_size=10, max_len=150):
 
         new_x = []
         for i in range(x.size(1)):
-            new_x.append(x[:end_pads[i], i])
+            new_x.append(x[:end_pads[i], i].cpu())
         return ["".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in new_x]
 
 
@@ -87,18 +87,18 @@ class ToyDataset(torch.utils.data.Dataset):
 
 def train_epoch(model, optimizer, dataloader, config):
     model.train()
-    lossf = nn.CrossEntropyLoss()
-    for i, (y, y_hat) in enumerate(dataloader):
+    lossf = nn.CrossEntropyLoss().cuda()
+    for i, (y, y_hat) in tqdm(enumerate(dataloader)):
         optimizer.zero_grad()
 
+        y = [x.cuda() for x in y]
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
-
         pred = model(y)
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
-        loss = lossf(pred, packed_seq_hat).mean()
+        loss = lossf(pred, packed_seq_hat.cuda()).mean()
         loss.backward()
         optimizer.step()
 
@@ -114,14 +114,29 @@ def main(args):
     dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=config['batch_size'],
                                              collate_fn=mycollate)
 
-    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len'])
+    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
+    epoch_start = 0
+    if args.ct:
+        pt = torch.load(args.logdir + "/autosave.model.pt")
+        model.load_state_dict(pt['state_dict'])
+        optimizer.load_state_dict(pt['optim_state_dict'])
+        epoch_start = pt['epoch']
 
-    for epoch in range(config['epochs']):
+
+    for epoch in range(epoch_start, config['epochs']):
         train_epoch(model, optimizer, dataloader, config)
         # if epoch % config['sample_freq'] == 0:
         print(sample(model, i2c, c2i, batch_size=10, max_len=config['max_len']))
+
+        torch.save(
+            {
+                'state_dict' : model.state_dict(),
+                'optim_state_dict' : optimizer.state_dict(),
+                'epoch' : epoch
+            }, args.logdir + "/autosave.model.pt"
+        )
 
 
 if __name__ == '__main__':
@@ -129,6 +144,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
+    parser.add_argument('--ct', help='continue training for longer', type=bool, action='store_true', default=False)
     args = parser.parse_args()
 
     main(args)
