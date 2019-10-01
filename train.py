@@ -22,6 +22,17 @@ def getconfig(args):
 
     return config_
 
+def count_valid_samples(smiles):
+    from rdkit import Chem
+    count = 0
+    for smi in smiles:
+        try:
+            mol     = Chem.MolFromSmiles(smi[1:-1])
+        except:
+            continue
+        if mol is not None:
+            count += 1
+    return count
 
 def get_input_data(fname, c2i):
     lines = open(fname, 'r').readlines()
@@ -106,10 +117,12 @@ def train_epoch(model, optimizer, dataloader, config):
 
 def main(args):
     config = getconfig(args)
+    print("loading data.")
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
     print("Vocab size is", len(vocab))
     s, e = get_input_data(args.i + "/out.txt", c2i)
     input_data = ToyDataset(s, e)
+    print("Done.")
 
     ## make data generator
     dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=config['batch_size'],
@@ -120,16 +133,20 @@ def main(args):
 
     epoch_start = 0
     if args.ct:
+        print("Continuing from save.")
         pt = torch.load(args.logdir + "/autosave.model.pt")
         model.load_state_dict(pt['state_dict'])
         optimizer.load_state_dict(pt['optim_state_dict'])
-        epoch_start = pt['epoch']
+        epoch_start = pt['epoch'] + 1
 
 
     for epoch in range(epoch_start, config['epochs']):
         train_epoch(model, optimizer, dataloader, config)
         # if epoch % config['sample_freq'] == 0:
-        print(sample(model, i2c, c2i, batch_size=10, max_len=config['max_len']))
+        samples = sample(model, i2c, c2i, batch_size=512, max_len=config['max_len'])
+        valid = count_valid_samples(samples)
+        print(samples)
+        print("Total valid samples:", valid, float(valid) / 512)
 
         torch.save(
             {
