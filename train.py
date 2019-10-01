@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.utils.rnn
 import torch.nn.functional as F
 from tqdm import tqdm
-
+import os
 def getconfig(args):
     config_ = {
         'epochs': 10,
@@ -146,5 +146,13 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
     parser.add_argument('--ct', help='continue training for longer', type=bool, action='store_true', default=False)
     args = parser.parse_args()
+
+    path = args.logdir
+    try:
+        os.mkdir(path)
+    except OSError:
+        print("Creation of the directory %s failed. Maybe it already exists? I will overwrite :)" % path)
+    else:
+        print("Successfully created the directory %s " % path)
 
     main(args)
