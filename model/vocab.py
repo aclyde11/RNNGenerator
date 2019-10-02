@@ -98,10 +98,14 @@ def main(args):
                         continue
 
                     # convert to index number
-                    i = list(map(lambda x : str(c2i(x)), smi))
+                    try:
+                        i = list(map(lambda x : str(c2i(x)), smi))
 
-                    o.write(','.join(i) + '\n')
-                    count += 1
+                        o.write(','.join(i) + '\n')
+                        count += 1
+                    except:
+                        print("key error did not print.")
+                        continue
     print("Output",count,"smiles.")
 
 if __name__ == '__main__':
