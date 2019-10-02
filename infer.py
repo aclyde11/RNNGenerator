@@ -73,7 +73,7 @@ def main(args, device):
     total_valid = 0
     total_unqiue = 0
     smiles = set()
-    for epoch in range(args.n / 512):
+    for epoch in range(int(args.n / 512)):
         samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'])
         samples = list(map(lambda x : x[1:-1], samples))
         total_sampled += len(samples)
