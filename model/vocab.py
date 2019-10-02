@@ -1,5 +1,6 @@
 import argparse
 import os
+from tqdm import tqdm
 
 START_CHAR = '%'
 END_CHAR = '^'
@@ -79,11 +80,12 @@ def main(args):
     print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
 
     #seconnd step is to make data:
+    count_=count
     count = 0
     _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
-            for line in f:
+            for line in tqdm(f, total=count_):
                 smis = line.strip()
                 if args.permute_smiles != 0:
                     smis = randomSmiles(smis, max_len=args.maxlen, attempts=args.permute_smiles)
