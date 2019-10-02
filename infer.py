@@ -65,7 +65,7 @@ def main(args, device):
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    pt = torch.load(args.logdir + "/autosave.model.pt", map_location=)
+    pt = torch.load(args.logdir + "/autosave.model.pt", map_location=device)
     model.load_state_dict(pt['state_dict'])
     optimizer.load_state_dict(pt['optim_state_dict'])
 
