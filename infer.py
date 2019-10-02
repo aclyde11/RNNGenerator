@@ -61,7 +61,6 @@ def main(args, device):
     print("loading data.")
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
 
-
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
@@ -74,7 +73,7 @@ def main(args, device):
     total_unqiue = 0
     smiles = set()
     for epoch in range(int(args.n / 512)):
-        samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'])
+        samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'], temp=args.temp)
         samples = list(map(lambda x : x[1:-1], samples))
         total_sampled += len(samples)
         if args.v:
@@ -91,11 +90,12 @@ def main(args, device):
             f.write(i)
             f.write('\n')
 
+
     print("output smiles to", args.o)
     print("Sampled", total_sampled)
     print("Total unique", total_unqiue, float(total_unqiue)/float(total_sampled))
     if args.v:
-        print("total valid", total_valid, float(total_valid)/float(total_valid))
+        print("total valid", total_valid, float(total_valid)/float(total_sampled))
 
 
 
@@ -107,6 +107,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', required=True, help='place to store output smiles', type=str)
     parser.add_argument('-n', help='number samples to test', type=int, required=True)
     parser.add_argument('-v', help='validate, uses rdkit', action='store_true')
+    parser.add_argument('-t', help='temperature', default=1.0, required=False, type=float)
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
