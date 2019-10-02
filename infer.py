@@ -73,7 +73,7 @@ def main(args, device):
     start = time.time()
 
     for epoch in range(int(args.n / 512)):
-        samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'], temp=args.temp)
+        samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'], temp=args.t)
         samples = list(map(lambda x: x[1:-1], samples))
         total_sampled += len(samples)
         if args.v:
