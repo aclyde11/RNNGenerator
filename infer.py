@@ -13,6 +13,11 @@ from train import getconfig, get_vocab_from_file
 
 def count_valid_samples(smiles):
     from rdkit import Chem
+    from rdkit import RDLogger
+    lg = RDLogger.logger()
+
+    lg.setLevel(RDLogger.CRITICAL)
+
     count = 0
     goods = []
     for smi in smiles:
@@ -92,7 +97,7 @@ def main(args, device):
             f.write('\n')
 
     print("output smiles to", args.o)
-    print("Took ", end-start)
+    print("Took ", end-start, "seconds")
     print("Sampled", total_sampled)
     print("Total unique", total_unqiue, float(total_unqiue) / float(total_sampled))
     if args.v:
@@ -100,7 +105,7 @@ def main(args, device):
 
 
 if __name__ == '__main__':
-    print("Note: This script is very picky. This will only run on a CPU at this time, but will be extended to GPU. ")
+    print("Note: This script is very picky. Please check device output to see where this is running. ")
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
