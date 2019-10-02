@@ -1,15 +1,13 @@
 import argparse
-from model.vocab import get_vocab_from_file, START_CHAR, END_CHAR
-from model.model import CharRNN
-import torch.utils.data
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.utils.rnn
-import torch.nn.functional as F
-from tqdm import tqdm
-import os
+import time
 
+import torch
+import torch.nn.functional as F
+import torch.nn.utils.rnn
+import torch.utils.data
+
+from model.model import CharRNN
+from model.vocab import START_CHAR, END_CHAR
 from train import getconfig, get_vocab_from_file
 
 
@@ -19,7 +17,7 @@ def count_valid_samples(smiles):
     goods = []
     for smi in smiles:
         try:
-            mol     = Chem.MolFromSmiles(smi[1:-1])
+            mol = Chem.MolFromSmiles(smi[1:-1])
             goods.append(Chem.MolToSmiles(mol))
         except:
             continue
@@ -72,9 +70,11 @@ def main(args, device):
     total_valid = 0
     total_unqiue = 0
     smiles = set()
+    start = time.time()
+
     for epoch in range(int(args.n / 512)):
         samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'], temp=args.temp)
-        samples = list(map(lambda x : x[1:-1], samples))
+        samples = list(map(lambda x: x[1:-1], samples))
         total_sampled += len(samples)
         if args.v:
             valid_smiles, goods = count_valid_samples(samples)
@@ -84,19 +84,19 @@ def main(args, device):
             smiles.update(samples)
     smiles = list(smiles)
     total_unqiue += len(smiles)
+    end = time.time()
 
     with open(args.o, 'w') as f:
         for i in smiles:
             f.write(i)
             f.write('\n')
 
-
     print("output smiles to", args.o)
+    print("Took ", end-start)
     print("Sampled", total_sampled)
-    print("Total unique", total_unqiue, float(total_unqiue)/float(total_sampled))
+    print("Total unique", total_unqiue, float(total_unqiue) / float(total_sampled))
     if args.v:
-        print("total valid", total_valid, float(total_valid)/float(total_sampled))
-
+        print("total valid", total_valid, float(total_valid) / float(total_sampled))
 
 
 if __name__ == '__main__':
