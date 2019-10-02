@@ -20,7 +20,7 @@ def get_vocab_from_file(fname):
 #
 # Generates a random permutations of smile strings.
 #
-def randomSmiles(smi, attempts=100):
+def randomSmiles(smi, max_len=150, attempts=100):
     from rdkit import Chem
     import random
     def randomSmiles_(m1):
@@ -41,7 +41,7 @@ def randomSmiles(smi, attempts=100):
     for i in range(attempts):
       smiles = randomSmiles_(m1)
       s.add(smiles)
-    s = list(s)
+    s = list(filter(lambda x : len(x) < max_len, list(s)))
 
     if len(s) > 1:
         return s
@@ -55,8 +55,6 @@ def main(args):
             randomSmiles('CNOPc1ccccc1', 10)
         except:
             print("Must set --permute_smiles to 0, cannot import RdKit. Smiles validity not being checked either.")
-        print("not implemented yet.")
-        exit()
 
     #first step generate vocab.
     count = 0
@@ -86,15 +84,22 @@ def main(args):
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
             for line in f:
-                smi = line.strip()
-                if len(smi) > args.maxlen - 2:
-                    continue
+                smis = line.strip()
+                if args.permute_smiles != 0:
+                    smis = randomSmiles(smis, max_len=args.maxlen, attempts=args.permute_smiles)
+                    if smis is None:
+                        continue
+                else:
+                    smis = [smis]
+                for smi in smis:
+                    if len(smi) > args.maxlen - 2:
+                        continue
 
-                # convert to index number
-                i = list(map(lambda x : str(c2i(x)), smi))
+                    # convert to index number
+                    i = list(map(lambda x : str(c2i(x)), smi))
 
-                o.write(','.join(i) + '\n')
-                count += 1
+                    o.write(','.join(i) + '\n')
+                    count += 1
     print("Output",count,"smiles.")
 
 if __name__ == '__main__':

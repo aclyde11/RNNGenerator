@@ -11,23 +11,38 @@ from model.vocab import START_CHAR, END_CHAR
 from train import getconfig, get_vocab_from_file
 
 
-def count_valid_samples(smiles):
-    from rdkit import Chem
-    from rdkit import RDLogger
-    lg = RDLogger.logger()
+def count_valid_samples(smiles, rdkit=True):
+    if rdkit:
+        from rdkit import Chem
+        from rdkit import RDLogger
+        lg = RDLogger.logger()
 
-    lg.setLevel(RDLogger.CRITICAL)
+        lg.setLevel(RDLogger.CRITICAL)
+        def toMol(smi):
+            try:
+                mol = Chem.MolFromSmiles(smi)
+                return Chem.MolToSmiles(mol)
+            except:
+                return None
+    else:
+        import pybel
+        def toMol(smi):
+            try:
+                m = pybel.readstring("smi", smi)
+                return m.write("smi")
+            except:
+                return None
 
     count = 0
     goods = []
     for smi in smiles:
         try:
-            mol = Chem.MolFromSmiles(smi)
-            goods.append(Chem.MolToSmiles(mol))
+            mol = toMol(smi)
+            if mol is not None:
+                goods.append(mol)
+                count += 1
         except:
             continue
-        if mol is not None:
-            count += 1
     return count, goods
 
 
@@ -77,12 +92,14 @@ def main(args, device):
     smiles = set()
     start = time.time()
 
-    for epoch in range(int(args.n / 512)):
-        samples = sample(model, i2c, c2i, device, batch_size=512, max_len=config['max_len'], temp=args.t)
+    batch_size = args.batch_size if args.batch_size > 1 else config['batch_size']
+
+    for epoch in range(int(args.n / batch_size)):
+        samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=config['max_len'], temp=args.t)
         samples = list(map(lambda x: x[1:-1], samples))
         total_sampled += len(samples)
-        if args.v:
-            valid_smiles, goods = count_valid_samples(samples)
+        if args.vb or args.vr:
+            valid_smiles, goods = count_valid_samples(samples, rdkit=args.vr)
             total_valid += valid_smiles
             smiles.update(goods)
         else:
@@ -111,8 +128,10 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
     parser.add_argument('-o', required=True, help='place to store output smiles', type=str)
     parser.add_argument('-n', help='number samples to test', type=int, required=True)
-    parser.add_argument('-v', help='validate, uses rdkit', action='store_true')
+    parser.add_argument('-vr', help='validate, uses rdkit', action='store_true')
+    parser.add_argument('-vb', help='validate, uses openababel', action='store_true')
     parser.add_argument('-t', help='temperature', default=1.0, required=False, type=float)
+    parser.add_argument('--batch_size', default=-1, required=False, type=int)
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
