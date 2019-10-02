@@ -79,8 +79,8 @@ def main(args, device):
         total_sampled += len(samples)
         if args.v:
             valid_smiles, goods = count_valid_samples(samples)
-            total_valid += total_valid
-            smiles.update(valid_smiles)
+            total_valid += valid_smiles
+            smiles.update(goods)
         else:
             smiles.update(samples)
     smiles = list(smiles)
