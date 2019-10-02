@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import os
 
-from train import getconfig, get_vocab_from_file,
+from train import getconfig, get_vocab_from_file
 
 
 def count_valid_samples(smiles):
