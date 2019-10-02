@@ -17,7 +17,7 @@ def count_valid_samples(smiles):
     goods = []
     for smi in smiles:
         try:
-            mol = Chem.MolFromSmiles(smi[1:-1])
+            mol = Chem.MolFromSmiles(smi)
             goods.append(Chem.MolToSmiles(mol))
         except:
             continue
