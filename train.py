@@ -12,12 +12,12 @@ import os
 
 def getconfig(args):
     config_ = {
-        'epochs': 10,
-        'batch_size': 512,
+        'epochs': 22,
+        'batch_size': 128,
         'vocab_size': 28,
         'emb_size': 32,
         'sample_freq': 1,
-        'max_len': 150
+        'max_len': 180
     }
 
     return config_
@@ -129,7 +129,7 @@ def main(args):
                                              collate_fn=mycollate)
 
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).cuda()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     epoch_start = 0
     if args.ct:
