@@ -100,6 +100,7 @@ class ToyDataset(torch.utils.data.Dataset):
 def train_epoch(model, optimizer, dataloader, config):
     model.train()
     lossf = nn.CrossEntropyLoss().cuda()
+    losses = []
     for i, (y, y_hat) in tqdm(enumerate(dataloader)):
         optimizer.zero_grad()
 
@@ -112,7 +113,9 @@ def train_epoch(model, optimizer, dataloader, config):
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.cuda()).mean()
         loss.backward()
+        losses.append(loss.item())
         optimizer.step()
+    return losses
 
 
 def main(args):
@@ -139,22 +142,22 @@ def main(args):
         optimizer.load_state_dict(pt['optim_state_dict'])
         epoch_start = pt['epoch'] + 1
 
-
-    for epoch in range(epoch_start, config['epochs']):
-        train_epoch(model, optimizer, dataloader, config)
-        # if epoch % config['sample_freq'] == 0:
-        samples = sample(model, i2c, c2i, batch_size=512, max_len=config['max_len'])
-        valid = count_valid_samples(samples)
-        print(samples)
-        print("Total valid samples:", valid, float(valid) / 512)
-
-        torch.save(
-            {
-                'state_dict' : model.state_dict(),
-                'optim_state_dict' : optimizer.state_dict(),
-                'epoch' : epoch
-            }, args.logdir + "/autosave.model.pt"
-        )
+    with open(args.logdir + "/training_log.csv") as flog:
+        flog.write("epoch,train_loss,sampled,valid")
+        for epoch in range(epoch_start, config['epochs']):
+            avg_loss = train_epoch(model, optimizer, dataloader, config)
+            samples = sample(model, i2c, c2i, batch_size=1024, max_len=config['max_len'])
+            valid = count_valid_samples(samples)
+            print(samples)
+            print("Total valid samples:", valid, float(valid) / 1024)
+            flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
+            torch.save(
+                {
+                    'state_dict' : model.state_dict(),
+                    'optim_state_dict' : optimizer.state_dict(),
+                    'epoch' : epoch
+                }, args.logdir + "/autosave.model.pt"
+            )
 
 
 if __name__ == '__main__':
