@@ -76,7 +76,6 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 
 def main(args, device):
     config = getconfig(args)
-    print("loading data.")
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
 
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
@@ -112,7 +111,6 @@ def main(args, device):
 
 
 if __name__ == '__main__':
-    print("Note: This script is very picky. Please check device output to see where this is running. ")
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
@@ -124,5 +122,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print('Using device:', device)
     main(args, device)
