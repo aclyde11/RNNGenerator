@@ -49,15 +49,16 @@ def count_valid_samples(smiles, rdkit=True):
 
 
 def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
+
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((2, batch_size, 256)).to(device)
-        h_0 = torch.zeros((2, batch_size, 256)).to(device)
-        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
+        c_0 = torch.zeros((2, batch_size, 256)).cuda(device)
+        h_0 = torch.zeros((2, batch_size, 256)).cuda(device)
+        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).cuda(device)
 
-        eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
-        end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
+        eos_mask = torch.zeros(batch_size, dtype=torch.bool).cuda(device)
+        end_pads = torch.tensor([max_len - 1]).repeat(batch_size).cuda(device)
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
             o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
@@ -80,10 +81,10 @@ def main(args, device, queue):
     config = getconfig(args)
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
 
-    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
+    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).cuda(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    pt = torch.load(args.logdir + "/autosave.model.pt", map_location=device)
+    pt = torch.load(args.logdir + "/autosave.model.pt", map_location='cuda:' + str(device))
     model.load_state_dict(pt['state_dict'])
     optimizer.load_state_dict(pt['optim_state_dict'])
 
@@ -115,8 +116,7 @@ if __name__ == '__main__':
     resqueue = multiprocessing.Queue()
     procs = []
     for i in range(2):
-        device = torch.device('cuda:' + str(i) if torch.cuda.is_available() else 'cpu')
-        reader_p = multiprocessing.Process(target=main, args=(args, device, resqueue))
+        reader_p = multiprocessing.Process(target=main, args=(args, i, resqueue))
         reader_p.daemon = True
         reader_p.start()
         procs.append(reader_p)
