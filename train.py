@@ -115,7 +115,9 @@ def train_epoch(model, optimizer, dataloader, config):
         loss.backward()
         losses.append(loss.item())
         optimizer.step()
-    return losses
+
+
+    return np.array(losses).flatten().mean()
 
 
 def main(args):
