@@ -121,7 +121,7 @@ if __name__ == '__main__':
         reader_p.start()
         procs.append(reader_p)
 
-    total = args.n * 4
+    total = args.n * 3
     counter = 0
     while counter < total:
         print(resqueue.get())
