@@ -142,7 +142,7 @@ def main(args):
         optimizer.load_state_dict(pt['optim_state_dict'])
         epoch_start = pt['epoch'] + 1
 
-    with open(args.logdir + "/training_log.csv") as flog:
+    with open(args.logdir + "/training_log.csv", 'w') as flog:
         flog.write("epoch,train_loss,sampled,valid")
         for epoch in range(epoch_start, config['epochs']):
             avg_loss = train_epoch(model, optimizer, dataloader, config)

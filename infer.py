@@ -117,7 +117,7 @@ def main(args, device):
     print("Took ", end-start, "seconds")
     print("Sampled", total_sampled)
     print("Total unique", total_unqiue, float(total_unqiue) / float(total_sampled))
-    if args.v:
+    if args.vr or args.vb:
         print("total valid", total_valid, float(total_valid) / float(total_sampled))
 
 
