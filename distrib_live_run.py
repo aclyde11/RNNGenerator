@@ -116,7 +116,7 @@ if __name__ == '__main__':
     procs = []
     for i in range(2):
         device = torch.device('cuda:' + str(i) if torch.cuda.is_available() else 'cpu')
-        reader_p = multiprocessing.Process(target=main, args=((args, device, resqueue),))
+        reader_p = multiprocessing.Process(target=main, args=(args, device, resqueue))
         reader_p.daemon = True
         reader_p.start()
         procs.append(reader_p)
