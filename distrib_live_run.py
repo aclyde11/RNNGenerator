@@ -1,3 +1,5 @@
+import multiprocessing
+
 import argparse
 import time
 
@@ -74,7 +76,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
         return ["".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in new_x]
 
 
-def main(args, device):
+def main(args, device, queue):
     config = getconfig(args)
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
 
@@ -91,16 +93,10 @@ def main(args, device):
     for epoch in range(int(args.n / batch_size)):
         samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=config['max_len'], temp=args.t)
         samples = list(map(lambda x: x[1:-1], samples))
+
+
         for i in samples:
-            print(i)
-        # if args.vb or args.vr:
-        #     valid_smiles, goods = count_valid_samples(samples, rdkit=args.vr)
-        #     total_valid += valid_smiles
-        #     smiles.update(goods)
-        # else:
-        #     smiles.update(samples)
-
-
+            queue.put(i)
 
 
 
@@ -115,5 +111,19 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=-1, required=False, type=int)
     args = parser.parse_args()
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    main(args, device)
+    i=0
+    resqueue = multiprocessing.Queue()
+    procs = []
+    for i in range(2):
+        device = torch.device('cuda:' + str(i) if torch.cuda.is_available() else 'cpu')
+        reader_p = multiprocessing.Process(target=main, args=((args, device, resqueue),))
+        reader_p.daemon = True
+        reader_p.start()
+        procs.append(reader_p)
+
+    total = args.n * 2
+    counter = 0
+    while counter < total:
+        print(resqueue.get())
+        counter += 1
+    exit()
