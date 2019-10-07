@@ -75,6 +75,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
         new_x = []
         for i in range(x.size(1)):
             new_x.append("".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in x[:end_pads[i], i].cpu())
+        print(new_x[0])
         return new_x
 
 
