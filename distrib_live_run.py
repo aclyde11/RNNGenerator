@@ -105,6 +105,13 @@ def poolProc(inqueue, outqueue, i2c):
             new_x.append("".join(map(i2c, jers)))
         outqueue.put(new_x)
 
+def writer(outqueue, total):
+    counter = 0
+    while counter < total:
+        samples = outqueue.get()
+        for i in samples:
+            print(i)
+            counter += 1
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -138,12 +145,9 @@ if __name__ == '__main__':
         reader_p.start()
         workersprocs.append(reader_p)
 
-    total = args.n
-    counter = 0
 
-    while counter < total:
-        samples = outqueue.get()
-        for i in samples:
-            print(i)
-            counter += 1
+    writer = multiprocessing.Process(target=writer, args=(outqueue, args.n))
+    writer.daemon=True
+    writer.start()
+    writer.join()
     exit()
