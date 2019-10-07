@@ -80,6 +80,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
             chars = []
             while (j < end_pads[i]):
                 chars.append(i2c(x[j,i]))
+                j += 1
             new_x.append("".join(chars))
 
         return new_x
