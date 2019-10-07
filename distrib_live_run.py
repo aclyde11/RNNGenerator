@@ -101,7 +101,7 @@ def poolProc(inqueue, outqueue, i2c):
         x, end_pads = inqueue.get()
         new_x = []
         for i in range(x.shape[0]):
-            jers = x[:end_pads[i], i]
+            jers = x[1:end_pads[i]-1, i]
             new_x.append("".join(map(i2c, jers)))
         outqueue.put(new_x)
 
