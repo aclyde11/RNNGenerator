@@ -73,6 +73,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
             eos_mask = eos_mask | i_eos_mask
 
         x = x.cpu().numpy()
+        print(x.shape)
         new_x = []
         for i in range(x.size[1]):
             j = 0
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     i=0
     resqueue = multiprocessing.Queue()
     procs = []
-    for i in range(6):
+    for i in range(1):
         reader_p = multiprocessing.Process(target=main, args=(args, i, resqueue))
         reader_p.daemon = True
         reader_p.start()
