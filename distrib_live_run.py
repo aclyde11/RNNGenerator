@@ -75,7 +75,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
         x = x.cpu().numpy()
         print(x.shape)
         new_x = []
-        for i in range(x.size[1]):
+        for i in range(x.shape[0]):
             j = 0
             chars = []
             while (j < end_pads[i]):
