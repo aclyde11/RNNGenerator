@@ -75,7 +75,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
         x = x.cpu().numpy()
 
 
-        return x
+        return x, end_pads.cpu()
 
 
 def main(args, device, queue):
