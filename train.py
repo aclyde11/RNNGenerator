@@ -47,16 +47,16 @@ def get_input_data(fname, c2i):
     return lines1, lines2
 
 
-def sample(model, i2c, c2i, temp=1, batch_size=10, max_len=150):
+def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((2, batch_size, 256)).cuda()
-        h_0 = torch.zeros((2, batch_size, 256)).cuda()
-        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).cuda()
+        c_0 = torch.zeros((2, batch_size, 256)).to(device)
+        h_0 = torch.zeros((2, batch_size, 256)).to(device)
+        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
-        eos_mask = torch.zeros(batch_size, dtype=torch.bool).cuda()
-        end_pads = torch.tensor([max_len - 1]).repeat(batch_size).cuda()
+        eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
+        end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
             o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
@@ -97,30 +97,35 @@ class ToyDataset(torch.utils.data.Dataset):
         return self.s[item], self.e[item]
 
 
-def train_epoch(model, optimizer, dataloader, config):
+def train_epoch(model, optimizer, dataloader, config, device):
     model.train()
-    lossf = nn.CrossEntropyLoss().cuda()
+    lossf = nn.CrossEntropyLoss().to(device)
     losses = []
+    counters =0
     for i, (y, y_hat) in tqdm(enumerate(dataloader)):
         optimizer.zero_grad()
 
-        y = [x.cuda() for x in y]
+        y = [x.to(device) for x in y]
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
         pred = model(y)
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
-        loss = lossf(pred, packed_seq_hat.cuda()).mean()
+        loss = lossf(pred, packed_seq_hat.to(device)).mean()
         loss.backward()
         losses.append(loss.item())
         optimizer.step()
+        if counters > 100:
+            break
+        else:
+            counters += 1
 
 
     return np.array(losses).flatten().mean()
 
 
-def main(args):
+def main(args, device):
     config = getconfig(args)
     print("loading data.")
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
@@ -133,7 +138,7 @@ def main(args):
     dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=config['batch_size'],
                                              collate_fn=mycollate)
 
-    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).cuda()
+    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     epoch_start = 0
@@ -147,8 +152,8 @@ def main(args):
     with open(args.logdir + "/training_log.csv", 'w') as flog:
         flog.write("epoch,train_loss,sampled,valid")
         for epoch in range(epoch_start, config['epochs']):
-            avg_loss = train_epoch(model, optimizer, dataloader, config)
-            samples = sample(model, i2c, c2i, batch_size=1024, max_len=config['max_len'])
+            avg_loss = train_epoch(model, optimizer, dataloader, config, device)
+            samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
             valid = count_valid_samples(samples)
             print(samples)
             print("Total valid samples:", valid, float(valid) / 1024)
@@ -169,7 +174,8 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
     parser.add_argument('--ct', help='continue training for longer', type=bool, default=False)
     args = parser.parse_args()
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print("Device: ", device)
     path = args.logdir
     try:
         os.mkdir(path)
@@ -178,4 +184,4 @@ if __name__ == '__main__':
     else:
         print("Successfully created the directory %s " % path)
 
-    main(args)
+    main(args, device)
