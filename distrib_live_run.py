@@ -136,13 +136,13 @@ if __name__ == '__main__':
         reader_p = multiprocessing.Process(target=poolProc, args=(resqueue, outqueue, i2c))
         reader_p.daemon = True
         reader_p.start()
-        procs.append(reader_p)
+        workersprocs.append(reader_p)
 
     total = args.n
     counter = 0
 
     while counter < total:
-        samples = resqueue.get()
+        samples = outqueue.get()
         for i in samples:
             print(i)
             counter += 1
