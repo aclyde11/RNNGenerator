@@ -100,7 +100,7 @@ def poolProc(inqueue, outqueue, i2c):
     while(True):
         x, end_pads = inqueue.get()
         new_x = []
-        for i in range(x.shape[0]):
+        for i in range(x.shape[1]):
             jers = x[1:end_pads[i]-1, i]
             new_x.append("".join(map(i2c, jers)))
         outqueue.put(new_x)
@@ -112,6 +112,7 @@ def writer(outqueue, total):
         for i in samples:
             print(i)
             counter += 1
+    exit()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
