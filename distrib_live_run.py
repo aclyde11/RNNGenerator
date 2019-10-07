@@ -110,13 +110,13 @@ if __name__ == '__main__':
     i=0
     resqueue = multiprocessing.Queue()
     procs = []
-    for i in range(4):
+    for i in range(6):
         reader_p = multiprocessing.Process(target=main, args=(args, i, resqueue))
         reader_p.daemon = True
         reader_p.start()
         procs.append(reader_p)
 
-    total = args.n * 3
+    total = args.n
     counter = 0
     while counter < total:
         samples = resqueue.get()
