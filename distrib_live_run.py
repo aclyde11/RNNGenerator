@@ -93,12 +93,7 @@ def main(args, device, queue):
 
     for epoch in range(int(args.n / batch_size)):
         samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=config['max_len'], temp=args.t)
-        samples = list(map(lambda x: x[1:-1], samples))
-
-
-        for i in samples:
-            queue.put(i)
-
+        queue.put(samples)
 
 
 if __name__ == '__main__':
@@ -124,6 +119,8 @@ if __name__ == '__main__':
     total = args.n * 3
     counter = 0
     while counter < total:
-        print(resqueue.get())
-        counter += 1
+        samples = resqueue.get()
+        for i in samples:
+            print(i[1:-1])
+            counter += 1
     exit()
