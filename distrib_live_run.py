@@ -73,16 +73,9 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
             eos_mask = eos_mask | i_eos_mask
 
         x = x.cpu().numpy()
-        new_x = []
-        for i in range(x.shape[0]):
-            j = 0
-            chars = []
-            while (j < end_pads[i]):
-                chars.append(i2c(x[j,i]))
-                j += 1
-            new_x.append("".join(chars))
 
-        return new_x
+
+        return x
 
 
 def main(args, device, queue):
@@ -124,11 +117,18 @@ if __name__ == '__main__':
         reader_p.start()
         procs.append(reader_p)
 
+    _, _, i2c = get_vocab_from_file(args.i + "/vocab.txt")
     total = args.n
     counter = 0
     while counter < total:
         samples = resqueue.get()
-        for i in samples:
-            print(i[1:-1])
-            counter += 1
+        x, end_pads = samples
+        new_x = []
+        for i in range(x.shape[0]):
+            j = 0
+            chars = []
+            while j < end_pads[i]:
+                chars.append(i2c(x[j,i]))
+                j += 1
+            print("".join(chars))
     exit()
