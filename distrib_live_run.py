@@ -59,6 +59,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).cuda(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).cuda(device)
+
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
             o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
@@ -73,8 +74,8 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 
         new_x = []
         for i in range(x.size(1)):
-            new_x.append(x[:end_pads[i], i].cpu())
-        return ["".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in new_x]
+            new_x.append("".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in x[:end_pads[i], i].cpu())
+        return new_x
 
 
 def main(args, device, queue):
