@@ -125,10 +125,10 @@ if __name__ == '__main__':
         x, end_pads = samples
         new_x = []
         for i in range(x.shape[0]):
-            j = 0
+            j = 1
             chars = []
-            while j < end_pads[i]:
-                chars.append(i2c(x[j,i]))
+            while j < (end_pads[i] - 1):
+                print(i2c(x[j,i]),end='')
                 j += 1
-            print("".join(chars))
+            print()
     exit()
