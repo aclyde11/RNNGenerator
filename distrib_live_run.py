@@ -96,6 +96,15 @@ def main(args, device, queue):
         samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=config['max_len'], temp=args.t)
         queue.put(samples)
 
+def poolProc(inqueue, outqueue, i2c):
+    while(True):
+        x, end_pads = inqueue.get()
+        new_x = []
+        for i in range(x.shape[0]):
+            jers = x[:end_pads[i], i]
+            new_x.append("".join(map(i2c, jers)))
+        outqueue.put(new_x)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -108,27 +117,33 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=-1, required=False, type=int)
     args = parser.parse_args()
 
-    i=0
+    gpus = 6
+    nworkers = 2 * 6
+
     resqueue = multiprocessing.Queue()
+    outqueue = multiprocessing.Queue()
+
     procs = []
-    for i in range(6):
+    for i in range(gpus):
         reader_p = multiprocessing.Process(target=main, args=(args, i, resqueue))
         reader_p.daemon = True
         reader_p.start()
         procs.append(reader_p)
 
+    workersprocs =[]
     _, _, i2c = get_vocab_from_file(args.i + "/vocab.txt")
+    for i in range(nworkers):
+        reader_p = multiprocessing.Process(target=poolProc, args=(resqueue, outqueue, i2c))
+        reader_p.daemon = True
+        reader_p.start()
+        procs.append(reader_p)
+
     total = args.n
     counter = 0
+
     while counter < total:
         samples = resqueue.get()
-        x, end_pads = samples
-        new_x = []
-        for i in range(x.shape[0]):
-            j = 1
-            chars = []
-            while j < (end_pads[i] - 1):
-                print(i2c(x[j,i]),end='')
-                j += 1
-            print()
+        for i in samples:
+            print(i)
+            counter += 1
     exit()
