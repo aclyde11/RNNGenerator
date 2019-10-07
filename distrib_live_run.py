@@ -72,7 +72,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
             end_pads[i_eos_mask] = i + 1
             eos_mask = eos_mask | i_eos_mask
 
-        x = x.cpu()
+        x = x.cpu().numpy().flatten()
         new_x = []
         for i in range(x.size(1)):
             j = 0
