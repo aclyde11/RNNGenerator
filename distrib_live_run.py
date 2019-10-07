@@ -72,10 +72,15 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
             end_pads[i_eos_mask] = i + 1
             eos_mask = eos_mask | i_eos_mask
 
+        x = x.cpu()
         new_x = []
         for i in range(x.size(1)):
-            new_x.append("".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in x[:end_pads[i], i].cpu())
-        print(new_x[0])
+            j = 0
+            chars = []
+            while (j < end_pads[i]):
+                chars.append(i2c(x[j,i]))
+            new_x.append("".join(chars))
+
         return new_x
 
 
