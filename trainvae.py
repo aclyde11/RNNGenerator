@@ -126,7 +126,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
 
         kldiv1 = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-        kldiv2 = torch.autograd.Variable([0.0])
+        kldiv2 = torch.autograd.Variable(0)
         for i in range(logvar.shape[0]):
             kldiv2 += -0.5 * torch.sum(1 + logvar[i] - mu[i].pow(2) - logvar[i].exp())
         print(kldiv1, kldiv2)
