@@ -128,7 +128,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
         optimizer.step()
 
         if i % 100 == 0:
-            iters.update({'loss' : loss.item(), 'kl' : kldiv.item()})
+            iters.set_postfix({'loss' : loss.item(), 'kl' : kldiv.item()})
 
 
     return np.array(losses).flatten().mean()
