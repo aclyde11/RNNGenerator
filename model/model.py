@@ -85,6 +85,7 @@ class DecoderCharRNN(nn.Module):
             x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
             o, h = self.lstm(x_emb, (h))
             y = self.linear(o.squeeze(0))
+            print(x_res.shape, y.shape)
             x_res[i] = y
             y = F.softmax(y / 1.0, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
