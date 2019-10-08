@@ -60,7 +60,7 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150)
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
         for i in range(1, max_len):
-            x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
+            x_emb = model.decoder.emb(x[i - 1, :]).unsqueeze(0)
 
             z = 0.2 * z + torch.randn(x_emb.shape) * (1-(0.2 * 0.2)) + 0.0 #AR
 
