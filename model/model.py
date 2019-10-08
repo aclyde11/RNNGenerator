@@ -80,14 +80,11 @@ class DecoderCharRNN(nn.Module):
         x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
 
         x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
-        print(x_res.shape)
         for i in range(1, self.max_len):
-
             x_emb = self.emb(x[i - 1, :]).unsqueeze(0)
             x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
             o, h = self.lstm(x_emb, (h))
             y = self.linear(o.squeeze(0))
-            print(x_res[i].shape, y.shape)
             x_res[i] = y
             y = F.softmax(y / 1.0, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
