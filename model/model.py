@@ -17,7 +17,15 @@ class CharRNN(nn.Module):
     def forward(self, x, with_softmax=False):
         # do stuff to train
         dv = x[0].device
-        x = [self.emb(torch.from_numpy(np.flip(x_.cpu().numpy(), axis=-1)).to(dv)) for x_ in x]
+        xs = []
+        for x_ in x:
+            x_ = x_.cpu().numpy()
+            x_ = np.flip(x_, axis=-1)
+            x_ = x_.copy()
+            x_ = self.emb(torch.from_numpy(x_).to(dv))
+            xs.append(x_)
+
+        x = xs
         x = nn.utils.rnn.pack_sequence(x, enforce_sorted=False)
 
         x,_ = self.lstm(x)
