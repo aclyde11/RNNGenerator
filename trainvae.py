@@ -63,7 +63,7 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150)
             x_emb = model.decoder.emb(x[i - 1, :]).unsqueeze(0)
 
             print(z.shape, x_emb.shape)
-            z = 0.2 * z + torch.randn(z.shape) * (1-(0.2 * 0.2)) + 0.0 #AR
+            z = 0.2 * z + torch.randn(z.shape, device=z.device) * (1-(0.2 * 0.2)) + 0.0 #AR
 
             x_emb = torch.cat([x_emb, z], dim=-1)
             o, h = model.decoder.lstm(x_emb, (h))
