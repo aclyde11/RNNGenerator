@@ -99,7 +99,6 @@ class DecoderCharRNN(nn.Module):
         #
         # x = self.linear(x)
 
-        print(x.shape)
         if with_softmax:
             return F.softmax(x_res, dim=-1)
         else:
