@@ -20,7 +20,7 @@ class VAERNN(nn.Module):
 
     def sample_z(self, mu, log_var):
         # Using reparameterization trick to sample from a gaussian
-        eps = torch.Variable(torch.randn(mu.shape))
+        eps = torch.autograd.Variable(torch.randn(mu.shape))
         return mu + torch.exp(log_var / 2.0) * eps
 
 class EncoderCharRNN(nn.Module):
