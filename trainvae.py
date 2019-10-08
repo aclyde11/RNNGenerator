@@ -108,9 +108,9 @@ def train_epoch(model, optimizer, dataloader, config, device):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
-    counters =0
     beta = 0.1
-    for i, (y, y_hat) in tqdm(enumerate(dataloader)):
+    iters = tqdm(enumerate(dataloader), postfix={'loss' : 0, 'kl' : 0})
+    for i, (y, y_hat) in iters:
         optimizer.zero_grad()
 
         y = [x.to(device) for x in y]
@@ -121,14 +121,14 @@ def train_epoch(model, optimizer, dataloader, config, device):
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
-        loss += beta * (-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())).flatten().sum()
+        kldiv = beta * (-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())).flatten().sum()
+        loss += kldiv
         loss.backward()
         losses.append(loss.item())
         optimizer.step()
-        if counters > 100:
-            break
-        else:
-            counters += 1
+
+        if i % 100 == 0:
+            iters.update({'loss' : loss.item(), 'kl' : kldiv.item()})
 
 
     return np.array(losses).flatten().mean()
@@ -162,7 +162,7 @@ def main(args, device):
         flog.write("epoch,train_loss,sampled,valid")
         for epoch in range(epoch_start, config['epochs']):
             avg_loss = train_epoch(model, optimizer, dataloader, config, device)
-            samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=1024, max_len=config['max_len'])
+            samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=8, max_len=config['max_len'])
             valid = count_valid_samples(samples)
             print(samples)
             print("Total valid samples:", valid, float(valid) / 1024)
