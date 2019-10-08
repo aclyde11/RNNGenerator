@@ -76,7 +76,7 @@ class DecoderCharRNN(nn.Module):
         dv = x[0].device
         xs = []
         for x_ in x:
-            x_ = self.emb(torch.from_numpy(x_).to(dv))
+            x_ = self.emb(x_.to(dv))
             xs.append(x_)
 
         x = xs
