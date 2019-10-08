@@ -107,7 +107,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
-    beta = 0.001
+    beta = 1e-7
     iters = tqdm(enumerate(dataloader), postfix={'loss' : 0, 'kl' : 0})
     for i, (y, y_hat) in iters:
         optimizer.zero_grad()
