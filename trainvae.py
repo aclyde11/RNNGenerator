@@ -109,6 +109,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
     counters =0
+    beta = 0.1
     for i, (y, y_hat) in tqdm(enumerate(dataloader)):
         optimizer.zero_grad()
 
@@ -116,10 +117,11 @@ def train_epoch(model, optimizer, dataloader, config, device):
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
-        pred = model(y)
+        pred, (mu, logvar) = model(y, return_mu=True)
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
+        loss += beta * (-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())).flatten().sum()
         loss.backward()
         losses.append(loss.item())
         optimizer.step()

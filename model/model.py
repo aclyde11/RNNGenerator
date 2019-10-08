@@ -11,12 +11,14 @@ class VAERNN(nn.Module):
         self.encoder = EncoderCharRNN(vocab_size, emb_size, z_size, max_len)
         self.decoder = DecoderCharRNN(vocab_size, emb_size, z_size, max_len)
 
-    def forward(self,x):
+    def forward(self,x, return_mu=True):
         mu, logvar  = self.encoder(x)
         z = self.sample_z(mu, logvar)
         x = self.decoder(x,z)
-
-        return x
+        if return_mu:
+            return x, (mu, logvar)
+        else:
+            return x
 
     def sample_z(self, mu, log_var):
         # Using reparameterization trick to sample from a gaussian
