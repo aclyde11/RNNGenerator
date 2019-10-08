@@ -63,7 +63,9 @@ class DecoderCharRNN(nn.Module):
     def __init__(self, vocab_size, emb_size, z_size, max_len=150):
         super(DecoderCharRNN, self).__init__()
         self.max_len = max_len
-        self.emb = nn.Embedding(vocab_size, emb_size)
+        self.emb = nn.Embedding(vocab_size, emb_size,)
+        self.emb.weight.requires_grad = False
+
         self.vocab_size = vocab_size
         self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=2)
         self.linear = nn.Linear(256, vocab_size)
