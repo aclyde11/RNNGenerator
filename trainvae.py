@@ -1,6 +1,6 @@
 import argparse
 from model.vocab import get_vocab_from_file, START_CHAR, END_CHAR
-from model.model import CharRNN
+from model.model import VAERNN
 import torch.utils.data
 import numpy as np
 import torch
@@ -17,7 +17,8 @@ def getconfig(args):
         'vocab_size': 28,
         'emb_size': 32,
         'sample_freq': 1,
-        'max_len': 180
+        'max_len': 180,
+        'z_size' : 4
     }
 
     return config_
@@ -51,16 +52,21 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150)
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((2, batch_size, 256)).to(device)
-        h_0 = torch.zeros((2, batch_size, 256)).to(device)
+        h = (torch.zeros((2, batch_size, 256)).to(device), torch.zeros((2, batch_size, 256)).to(device))
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
+
+        z = torch.randn((batch_size, z_dim))
 
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
-            o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
-            y = model.linear(o.squeeze(0))
+
+            z = 0.2 * z + torch.randn(x_emb.shape) * (1-(0.2 * 0.2)) + 0.0 #AR
+
+            x_emb = torch.cat([x_emb, z])
+            o, h = model.decoder.lstm(x_emb, (h))
+            y = model.decoder.linear(o.squeeze(0))
             y = F.softmax(y / temp, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
             x[i, ~eos_mask] = w[~eos_mask]
@@ -138,7 +144,7 @@ def main(args, device):
     dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=config['batch_size'],
                                              collate_fn=mycollate)
 
-    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
+    model = VAERNN(config['vocab_size'], config['emb_size'], z_size=config['z_size'], max_len=config['max_len']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     epoch_start = 0
@@ -153,7 +159,7 @@ def main(args, device):
         flog.write("epoch,train_loss,sampled,valid")
         for epoch in range(epoch_start, config['epochs']):
             avg_loss = train_epoch(model, optimizer, dataloader, config, device)
-            samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
+            samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=1024, max_len=config['max_len'])
             valid = count_valid_samples(samples)
             print(samples)
             print("Total valid samples:", valid, float(valid) / 1024)
