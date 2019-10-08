@@ -55,7 +55,7 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150)
         h = (torch.zeros((2, batch_size, 256)).to(device), torch.zeros((2, batch_size, 256)).to(device))
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
-        z = torch.randn((batch_size, z_dim)).to(device)
+        z = torch.randn((1, batch_size, z_dim)).to(device)
 
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
@@ -63,9 +63,9 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150)
             x_emb = model.decoder.emb(x[i - 1, :]).unsqueeze(0)
 
             print(z.shape, x_emb.shape)
-            z = 0.2 * z + torch.randn(x_emb.shape) * (1-(0.2 * 0.2)) + 0.0 #AR
+            z = 0.2 * z + torch.randn(z.shape) * (1-(0.2 * 0.2)) + 0.0 #AR
 
-            x_emb = torch.cat([x_emb, z])
+            x_emb = torch.cat([x_emb, z], dim=-1)
             o, h = model.decoder.lstm(x_emb, (h))
             y = model.decoder.linear(o.squeeze(0))
             y = F.softmax(y / temp, dim=-1)
