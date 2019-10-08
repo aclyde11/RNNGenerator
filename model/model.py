@@ -81,7 +81,7 @@ class DecoderCharRNN(nn.Module):
 
             x_emb = ember(x[i - 1, :]).unsqueeze(0)
             print(x_emb.shape, z[i].shape)
-            x_emb = torch.cat([x_emb, z[i]], dim=-1)
+            x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
             o, h = self.lstm(x_emb, (h))
             y = self.linear(o.squeeze(0))
             y = F.softmax(y / 1.0, dim=-1)
