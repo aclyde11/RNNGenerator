@@ -81,7 +81,7 @@ class DecoderCharRNN(nn.Module):
 
         x = xs
         x = nn.utils.rnn.pack_sequence(x, enforce_sorted=False)
-        x = nn.utils.rnn.pad_packed_sequence(x, padding_value=0, total_length=self.max_len)
+        x,_ = nn.utils.rnn.pad_packed_sequence(x, padding_value=0, total_length=self.max_len)
 
         x = torch.cat([x,z], dim=-1)
         x,_ = self.lstm(x)
