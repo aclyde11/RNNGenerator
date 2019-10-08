@@ -75,7 +75,9 @@ class DecoderCharRNN(nn.Module):
         batch_size = z.shape[1]
         h = (torch.zeros((2, batch_size, 256)).to(dv), torch.zeros((2, batch_size, 256)).to(dv))
         x = torch.tensor(startchar).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+
         x_res = torch.tensor((x_actual.shape[0], x_actual.shape[1], self.vocab_size))
+        print(x_res.shape)
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(dv)
         end_pads = torch.tensor([self.max_len - 1]).repeat(batch_size).to(dv)
         for i in range(1, self.max_len):
