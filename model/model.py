@@ -92,10 +92,13 @@ class DecoderCharRNN(nn.Module):
             end_pads[i_eos_mask] = i + 1
             eos_mask = eos_mask | i_eos_mask
 
-        x = torch.cat([self.dropout(x),z], dim=-1)
-        x,_ = self.lstm(x)
 
-        x = self.linear(x)
+        # x = torch.cat([self.dropout(x),z], dim=-1)
+        # x,_ = self.lstm(x)
+        #
+        # x = self.linear(x)
+
+        print(x.shape)
         if with_softmax:
             return F.softmax(x, dim=-1)
         else:
