@@ -63,8 +63,6 @@ class DecoderCharRNN(nn.Module):
     def __init__(self, vocab_size, emb_size, z_size, max_len=150):
         super(DecoderCharRNN, self).__init__()
         self.max_len = max_len
-        self.emb = nn.Embedding(vocab_size, emb_size,)
-        self.emb.weight.requires_grad = False
 
         self.vocab_size = vocab_size
         self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=2)
@@ -81,7 +79,11 @@ class DecoderCharRNN(nn.Module):
 
         x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
         for i in range(1, self.max_len):
-            x_emb = self.emb(x[i - 1, :]).unsqueeze(0)
+            if i == 1:
+                x_emb = (x_actual[i - 1, :]).unsqueeze(0)
+            else:
+                x_emb = ember(x[i - 1, :]).unsqueeze(0)
+
             x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
             o, h = self.lstm(x_emb, (h))
             y = self.linear(o.squeeze(0))
@@ -89,8 +91,6 @@ class DecoderCharRNN(nn.Module):
             y = F.softmax(y / 1.0, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
             x[i] = w
-
-
 
         # x = torch.cat([self.dropout(x),z], dim=-1)
         # x,_ = self.lstm(x)
