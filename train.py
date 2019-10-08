@@ -35,7 +35,7 @@ def count_valid_samples(smiles):
     return count
 
 def get_input_data(fname, c2i):
-    lines = open(fname, 'r').readlines()
+    lines = open(fname, 'r').readlines()[:10000]
     lines = list(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), lines)))))
 
     lines1 = [torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)) for y in
