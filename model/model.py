@@ -12,9 +12,9 @@ class VAERNN(nn.Module):
         self.decoder = DecoderCharRNN(vocab_size, emb_size, z_size, max_len)
 
     def forward(self,x, return_mu=True):
-        mu, logvar  = self.encoder(x)
+        mu, logvar, x_padded, lens  = self.encoder(x)
         z = self.sample_z(mu, logvar)
-        x = self.decoder(x,z)
+        x = self.decoder(x_padded,z)
         if return_mu:
             return x, (mu, logvar)
         else:
