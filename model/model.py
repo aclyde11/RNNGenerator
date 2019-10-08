@@ -1,20 +1,22 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from model.vocab import END_CHAR
 import numpy as np
 
 
 class VAERNN(nn.Module):
-    def __init__(self, vocab_size, emb_size, z_size=4, max_len=150):
+    def __init__(self, vocab_size, emb_size, z_size=4, max_len=150, endchar=34, startchar=23):
         super(VAERNN, self).__init__()
         self.encoder = EncoderCharRNN(vocab_size, emb_size, z_size, max_len)
         self.decoder = DecoderCharRNN(vocab_size, emb_size, z_size, max_len)
+        self.endchar = endchar
+        self.startchar = startchar
 
     def forward(self,x, return_mu=True):
         mu, logvar, x_padded, lens  = self.encoder(x)
         z = self.sample_z(mu, logvar)
-        x = self.decoder(x_padded,z)
+        x = self.decoder(x_padded,z, self.endchar, self.startchar, self.encoder.emb)
         if return_mu:
             return x, (mu, logvar)
         else:
@@ -66,8 +68,30 @@ class DecoderCharRNN(nn.Module):
         self.dropout = nn.Dropout(0.1)
 
     # pass x as a pack padded sequence please.
-    def forward(self, x, z, with_softmax=False):
+    def forward(self, x_actual, z, endchar, startchar, ember, with_softmax=False):
         # do stuff to train
+        dv = z.device
+        batch_size = z.shape[1]
+        h = (torch.zeros((2, batch_size, 256)).to(dv), torch.zeros((2, batch_size, 256)).to(dv))
+        x = torch.tensor(startchar).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+
+        eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(dv)
+        end_pads = torch.tensor([self.max_len - 1]).repeat(batch_size).to(dv)
+        for i in range(1, self.max_len):
+
+            x_emb = ember(x[i - 1, :]).unsqueeze(0)
+
+            x_emb = torch.cat([x_emb, z[i]], dim=-1)
+            o, h = self.lstm(x_emb, (h))
+            y = self.linear(o.squeeze(0))
+            y = F.softmax(y / 1.0, dim=-1)
+            w = torch.multinomial(y, 1).squeeze()
+            x[i, ~eos_mask] = w[~eos_mask]
+
+            i_eos_mask = ~eos_mask & (w == endchar)
+            end_pads[i_eos_mask] = i + 1
+            eos_mask = eos_mask | i_eos_mask
+
         x = torch.cat([self.dropout(x),z], dim=-1)
         x,_ = self.lstm(x)
 

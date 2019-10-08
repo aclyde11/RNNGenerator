@@ -148,7 +148,7 @@ def main(args, device):
     dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=config['batch_size'],
                                              collate_fn=mycollate)
 
-    model = VAERNN(config['vocab_size'], config['emb_size'], z_size=config['z_size'], max_len=config['max_len']).to(device)
+    model = VAERNN(config['vocab_size'], config['emb_size'], startchar=c2i(START_CHAR), endchar=c2i(END_CHAR), z_size=config['z_size'], max_len=config['max_len']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     epoch_start = 0
