@@ -122,8 +122,9 @@ def train_epoch(model, optimizer, dataloader, config, device):
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
 
+        print('logvar', logvar.shape)
         kldiv = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        print('kl_shape', kldiv.shape)
+
         loss += beta * kldiv
         loss.backward()
         losses.append(loss.item())
