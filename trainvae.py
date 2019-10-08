@@ -48,11 +48,11 @@ def get_input_data(fname, c2i):
     return lines1, lines2
 
 
-def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150, alpha=0.2):
+def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150, alpha=0.2, num_layers=4):
     model.eval()
     with torch.no_grad():
 
-        h = (torch.zeros((2, batch_size, 256)).to(device), torch.zeros((2, batch_size, 256)).to(device))
+        h = (torch.zeros((num_layers, batch_size, 256)).to(device), torch.zeros((num_layers, batch_size, 256)).to(device))
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
         z = torch.randn((1, batch_size, z_dim)).to(device)
