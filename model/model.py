@@ -67,7 +67,8 @@ class DecoderCharRNN(nn.Module):
         self.max_len = max_len
 
         self.vocab_size = vocab_size
-        self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=4)
+        self.num_layers= 4
+        self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=self.num_layers)
         self.linear = nn.Linear(256, vocab_size)
         self.dropout = nn.Dropout(0.1)
 
@@ -76,7 +77,7 @@ class DecoderCharRNN(nn.Module):
         # do stuff to train
         dv = z.device
         batch_size = z.shape[1]
-        h = (torch.autograd.Variable(torch.zeros((2, batch_size, 256)).to(dv)), torch.autograd.Variable(torch.zeros((2, batch_size, 256)).to(dv)))
+        h = (torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)), torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)))
         x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
 
         x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
