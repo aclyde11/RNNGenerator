@@ -48,7 +48,7 @@ def get_input_data(fname, c2i):
     return lines1, lines2
 
 
-def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150):
+def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150, alpha=0.2):
     model.eval()
     with torch.no_grad():
 
@@ -62,8 +62,7 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150)
         for i in range(1, max_len):
             x_emb = model.decoder.emb(x[i - 1, :]).unsqueeze(0)
 
-            print(z.shape, x_emb.shape)
-            z = 0.2 * z + torch.randn(z.shape, device=z.device) * (1-(0.2 * 0.2)) + 0.0 #AR
+            z = alpha * z + torch.randn(z.shape, device=z.device) * (1-(alpha * alpha)) + 0.0 #AR
 
             x_emb = torch.cat([x_emb, z], dim=-1)
             o, h = model.decoder.lstm(x_emb, (h))
@@ -122,22 +121,15 @@ def train_epoch(model, optimizer, dataloader, config, device):
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
 
-        print('logvar', logvar.shape)
+        kldiv = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-        kldiv1 = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-        kldiv2 = torch.autograd.Variable(torch.zeros(1)).to(logvar.device)
-        for i in range(logvar.shape[0]):
-            kldiv2 += -0.5 * torch.sum(1 + logvar[i] - mu[i].pow(2) - logvar[i].exp())
-        print(kldiv1, kldiv2)
-        exit()
-        loss += beta * kldiv1
+        loss += beta * kldiv
         loss.backward()
         losses.append(loss.item())
         optimizer.step()
 
         if i % 100 == 0:
-            iters.set_postfix({'loss' : loss.item(), 'kl' : kldiv1.item()})
+            iters.set_postfix({'loss' : loss.item(), 'kl' : kldiv.item()})
 
 
     return np.array(losses).flatten().mean()
