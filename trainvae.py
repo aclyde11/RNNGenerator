@@ -13,12 +13,12 @@ import os
 def getconfig(args):
     config_ = {
         'epochs': 22,
-        'batch_size': 128,
+        'batch_size': 64,
         'vocab_size': 28,
         'emb_size': 32,
         'sample_freq': 1,
         'max_len': 180,
-        'z_size' : 4
+        'z_size' : 8
     }
 
     return config_
@@ -36,7 +36,7 @@ def count_valid_samples(smiles):
     return count
 
 def get_input_data(fname, c2i):
-    lines = open(fname, 'r').readlines()
+    lines = open(fname, 'r').readlines()[:2000000]
     lines = list(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), lines)))))
 
     lines1 = [torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)) for y in

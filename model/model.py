@@ -63,11 +63,12 @@ class DecoderCharRNN(nn.Module):
         self.max_len = max_len
         self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=2)
         self.linear = nn.Linear(256, vocab_size)
+        self.dropout = nn.Dropout(0.1)
 
     # pass x as a pack padded sequence please.
     def forward(self, x, z, with_softmax=False):
         # do stuff to train
-        x = torch.cat([x,z], dim=-1)
+        x = torch.cat([self.dropout(x),z], dim=-1)
         x,_ = self.lstm(x)
 
         x = self.linear(x)
