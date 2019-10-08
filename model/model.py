@@ -63,6 +63,7 @@ class DecoderCharRNN(nn.Module):
     def __init__(self, vocab_size, emb_size, z_size, max_len=150):
         super(DecoderCharRNN, self).__init__()
         self.max_len = max_len
+        self.vocab_size = vocab_size
         self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=2)
         self.linear = nn.Linear(256, vocab_size)
         self.dropout = nn.Dropout(0.1)
@@ -74,7 +75,7 @@ class DecoderCharRNN(nn.Module):
         batch_size = z.shape[1]
         h = (torch.zeros((2, batch_size, 256)).to(dv), torch.zeros((2, batch_size, 256)).to(dv))
         x = torch.tensor(startchar).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
-
+        x_res = torch.tensor((x_actual.shape[0], x_actual.shape[1], self.vocab_size))
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(dv)
         end_pads = torch.tensor([self.max_len - 1]).repeat(batch_size).to(dv)
         for i in range(1, self.max_len):
@@ -84,6 +85,7 @@ class DecoderCharRNN(nn.Module):
             x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
             o, h = self.lstm(x_emb, (h))
             y = self.linear(o.squeeze(0))
+            x_res[i] = y
             y = F.softmax(y / 1.0, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
             x[i, ~eos_mask] = w[~eos_mask]
