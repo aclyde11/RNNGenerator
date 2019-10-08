@@ -128,7 +128,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
         losses.append(loss.item())
         optimizer.step()
 
-        if i % 100 == 0:
+        if i % 2 == 0:
             iters.set_postfix({'loss' : loss.item(), 'kl' : kldiv.item()})
 
 
