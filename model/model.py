@@ -74,12 +74,10 @@ class DecoderCharRNN(nn.Module):
         dv = z.device
         batch_size = z.shape[1]
         h = (torch.zeros((2, batch_size, 256)).to(dv), torch.zeros((2, batch_size, 256)).to(dv))
-        x = torch.tensor(startchar).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+        x = torch.autograd.Variable(torch.tensor(startchar).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv))
 
         x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
         print(x_res.shape)
-        eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(dv)
-        end_pads = torch.tensor([self.max_len - 1]).repeat(batch_size).to(dv)
         for i in range(1, self.max_len):
 
             x_emb = ember(x[i - 1, :]).unsqueeze(0)
@@ -90,11 +88,8 @@ class DecoderCharRNN(nn.Module):
             x_res[i] = y
             y = F.softmax(y / 1.0, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
-            x[i, ~eos_mask] = w[~eos_mask]
+            x[i] = w
 
-            i_eos_mask = ~eos_mask & (w == endchar)
-            end_pads[i_eos_mask] = i + 1
-            eos_mask = eos_mask | i_eos_mask
 
 
         # x = torch.cat([self.dropout(x),z], dim=-1)
