@@ -104,9 +104,9 @@ class DecoderCharRNN(nn.Module):
 
         print(x.shape)
         if with_softmax:
-            return F.softmax(x, dim=-1)
+            return F.softmax(x_res, dim=-1)
         else:
-            return x
+            return x_res
 
     def sample(self):
         return None
