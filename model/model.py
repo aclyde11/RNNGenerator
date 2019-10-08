@@ -80,7 +80,7 @@ class DecoderCharRNN(nn.Module):
         for i in range(1, self.max_len):
 
             x_emb = ember(x[i - 1, :]).unsqueeze(0)
-
+            print(x_emb.shape, z[i].shape)
             x_emb = torch.cat([x_emb, z[i]], dim=-1)
             o, h = self.lstm(x_emb, (h))
             y = self.linear(o.squeeze(0))
