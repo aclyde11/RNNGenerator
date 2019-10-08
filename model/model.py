@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import random
 from model.vocab import END_CHAR
 import numpy as np
 
@@ -66,12 +67,12 @@ class DecoderCharRNN(nn.Module):
         self.max_len = max_len
 
         self.vocab_size = vocab_size
-        self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=2)
+        self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=4)
         self.linear = nn.Linear(256, vocab_size)
         self.dropout = nn.Dropout(0.1)
 
     # pass x as a pack padded sequence please.
-    def forward(self, x_actual, z, endchar, startchar, ember, with_softmax=False):
+    def forward(self, x_actual, z, endchar, startchar, ember, prob_forcing=0.5, with_softmax=False):
         # do stuff to train
         dv = z.device
         batch_size = z.shape[1]
@@ -80,7 +81,7 @@ class DecoderCharRNN(nn.Module):
 
         x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
         for i in range(1, self.max_len):
-            if i == 1:
+            if i == 1 or (random.random() < prob_forcing):
                 x_emb = (x_actual[i - 1, :]).unsqueeze(0)
             else:
                 x_emb = ember(x[i - 1, :]).unsqueeze(0)
