@@ -70,10 +70,19 @@ class DecoderCharRNN(nn.Module):
     # pass x as a pack padded sequence please.
     def forward(self, x, z, with_softmax=False):
         # do stuff to train
+
+        dv = x[0].device
+        xs = []
+        for x_ in x:
+            x_ = self.emb(torch.from_numpy(x_).to(dv))
+            xs.append(x_)
+
+        x = xs
+        x = nn.utils.rnn.pack_sequence(x, enforce_sorted=False)
+        x = nn.utils.rnn.pad_packed_sequence(x, padding_value=0, total_length=self.max_len)
+
         x = torch.cat([x,z], dim=-1)
         x,_ = self.lstm(x)
-
-        x, _  = nn.utils.rnn.pad_packed_sequence(x, padding_value=0, total_length=self.max_len)
 
         x = self.linear(x)
         if with_softmax:
