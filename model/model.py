@@ -14,10 +14,10 @@ class VAERNN(nn.Module):
         self.endchar = endchar
         self.startchar = startchar
 
-    def forward(self,x, return_mu=True):
+    def forward(self,x, return_mu=True, prob_forcing=0.5):
         mu, logvar, x_padded, lens  = self.encoder(x)
         z = self.sample_z(mu, logvar)
-        x = self.decoder(x_padded,z, self.endchar, self.startchar, self.encoder.emb)
+        x = self.decoder(x_padded,z, self.endchar, self.startchar, self.encoder.emb, prob_forcing=prob_forcing)
         if return_mu:
             return x, (mu, logvar)
         else:

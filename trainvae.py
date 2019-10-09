@@ -103,11 +103,11 @@ class ToyDataset(torch.utils.data.Dataset):
         return self.s[item], self.e[item]
 
 
-def train_epoch(model, optimizer, dataloader, config, device):
+def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
-    beta = (1e-2) / float(config['max_len'])
+    beta = ((1e-4) / float(config['max_len']) ) * epoch
     iters = tqdm(enumerate(dataloader), postfix={'loss' : 0, 'kl' : 0})
     for i, (y, y_hat) in iters:
         optimizer.zero_grad()
@@ -116,7 +116,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
-        pred, (mu, logvar) = model(y, return_mu=True)
+        pred, (mu, logvar) = model(y, return_mu=True, prob_forcing=max(0, 0.8 - (epoch * 0.01)))
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
@@ -162,7 +162,7 @@ def main(args, device):
     with open(args.logdir + "/training_log.csv", 'w') as flog:
         flog.write("epoch,train_loss,sampled,valid")
         for epoch in range(epoch_start, config['epochs']):
-            avg_loss = train_epoch(model, optimizer, dataloader, config, device)
+            avg_loss = train_epoch(model, optimizer, dataloader, config, device, epoch=epoch)
             samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=8, max_len=config['max_len'])
             valid = count_valid_samples(samples)
             print(samples)
