@@ -73,7 +73,7 @@ class DecoderCharRNN(nn.Module):
         self.dropout = nn.Dropout(0.1)
 
     # pass x as a pack padded sequence please.
-    def forward(self, x_actual, z, endchar, startchar, ember, prob_forcing=0.5, with_softmax=False):
+    def forward(self, x_actual, z, endchar, startchar, ember, prob_forcing=0.25, with_softmax=False):
         # do stuff to train
         dv = z.device
         batch_size = z.shape[1]
