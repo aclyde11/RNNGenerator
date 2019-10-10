@@ -18,7 +18,7 @@ def getconfig(args):
         'emb_size': 32,
         'sample_freq': 1,
         'max_len': 180,
-        'z_size' : 8
+        'z_size' : 6
     }
 
     return config_
@@ -36,7 +36,7 @@ def count_valid_samples(smiles):
     return count
 
 def get_input_data(fname, c2i):
-    lines = open(fname, 'r').readlines()[:500000]
+    lines = open(fname, 'r').readlines()[:250000]
     lines = list(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), lines)))))
 
     lines1 = [torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)) for y in
@@ -107,7 +107,7 @@ def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
-    beta = ((1e-4) / float(config['max_len']) ) * (3 * epoch)
+    beta = ((1e-3) / float(config['max_len']) ) * (5 * epoch)
     iters = tqdm(enumerate(dataloader), postfix={'loss' : 0, 'kl' : 0})
     for i, (y, y_hat) in iters:
         optimizer.zero_grad()
@@ -116,7 +116,7 @@ def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
-        pred, (mu, logvar) = model(y, return_mu=True, prob_forcing=max(0, 0.8 - (epoch * 0.01)))
+        pred, (mu, logvar) = model(y, return_mu=True, prob_forcing=max(0, 0.9 - (epoch * 0.05)))
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
@@ -166,7 +166,7 @@ def main(args, device):
             samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=8, max_len=config['max_len'])
             valid = count_valid_samples(samples)
             print(samples)
-            print("Total valid samples:", valid, float(valid) / 1024)
+            print("Total valid samples:", valid, float(valid))
             flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
             torch.save(
                 {

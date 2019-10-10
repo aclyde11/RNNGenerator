@@ -53,8 +53,7 @@ class EncoderCharRNN(nn.Module):
 
         mu = self.linear1(x)
         logvar = self.linear2(x)
-        #   x = [max_len, batch_size, mu]
-        #   x = [max_len, batch_size, sigma]
+
 
         return mu, logvar, x_padded, lens
 
@@ -92,14 +91,8 @@ class DecoderCharRNN(nn.Module):
             y = self.linear(o.squeeze(0))
             x_res[i] = y
             y = F.softmax(y / 1.0, dim=-1)
-            # w = torch.multinomial(y, 1).squeeze()
             w = torch.argmax(y, dim=-1).squeeze()
             x[i] = w
-
-        # x = torch.cat([self.dropout(x),z], dim=-1)
-        # x,_ = self.lstm(x)
-        #
-        # x = self.linear(x)
 
         if with_softmax:
             return F.softmax(x_res, dim=-1)
