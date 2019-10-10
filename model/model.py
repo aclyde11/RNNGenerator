@@ -14,10 +14,10 @@ class VAERNN(nn.Module):
         self.endchar = endchar
         self.startchar = startchar
 
-    def forward(self,x, return_mu=True, prob_forcing=0.5):
+    def forward(self,x, return_mu=True, prob_forcing=0.5, force=True):
         mu, logvar, x_padded, lens  = self.encoder(x)
         z = self.sample_z(mu, logvar)
-        x = self.decoder(x_padded,z, self.endchar, self.startchar, self.encoder.emb, prob_forcing=prob_forcing)
+        x = self.decoder(x_padded,z, self.endchar, self.startchar, self.encoder.emb, force=True, prob_forcing=prob_forcing)
         if return_mu:
             return x, (mu, logvar)
         else:
@@ -72,32 +72,43 @@ class DecoderCharRNN(nn.Module):
         self.dropout = nn.Dropout(0.1)
 
     # pass x as a pack padded sequence please.
-    def forward(self, x_actual, z, endchar, startchar, ember, prob_forcing=0.25, with_softmax=False):
+    def forward(self, x_actual, z, endchar, startchar, ember, force=True, prob_forcing=0.25, with_softmax=False):
         # do stuff to train
-        dv = z.device
-        batch_size = z.shape[1]
-        h = (torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)), torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)))
-        x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
 
-        x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
-        for i in range(1, self.max_len):
-            if i == 1 or (random.random() < prob_forcing):
-                x_emb = (x_actual[i - 1, :]).unsqueeze(0)
+        if force:
+            x, _ = self.lstm(x_actual)
+
+            x = self.linear(x)
+            if with_softmax:
+                return F.softmax(x, dim=-1)
             else:
-                x_emb = ember(x[i - 1, :]).unsqueeze(0)
+                return x
 
-            x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
-            o, h = self.lstm(x_emb, (h))
-            y = self.linear(o.squeeze(0))
-            x_res[i] = y
-            y = F.softmax(y / 1.0, dim=-1)
-            w = torch.argmax(y, dim=-1).squeeze()
-            x[i] = w
-
-        if with_softmax:
-            return F.softmax(x_res, dim=-1)
         else:
-            return x_res
+            dv = z.device
+            batch_size = z.shape[1]
+            h = (torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)), torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)))
+            x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+
+            x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
+            for i in range(1, self.max_len):
+                if i == 1 or (random.random() < prob_forcing):
+                    x_emb = (x_actual[i - 1, :]).unsqueeze(0)
+                else:
+                    x_emb = ember(x[i - 1, :]).unsqueeze(0)
+
+                x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
+                o, h = self.lstm(x_emb, (h))
+                y = self.linear(o.squeeze(0))
+                x_res[i] = y
+                y = F.softmax(y / 1.0, dim=-1)
+                w = torch.argmax(y, dim=-1).squeeze()
+                x[i] = w
+
+            if with_softmax:
+                return F.softmax(x_res, dim=-1)
+            else:
+                return x_res
 
     def sample(self):
         return None
