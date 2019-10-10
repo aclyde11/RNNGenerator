@@ -93,7 +93,7 @@ class DecoderCharRNN(nn.Module):
             x_res[i] = y
             y = F.softmax(y / 1.0, dim=-1)
             # w = torch.multinomial(y, 1).squeeze()
-            w = y.argmax(y).squeeze()
+            w = torch.argmax(y, dim=-1).squeeze()
             x[i] = w
 
         # x = torch.cat([self.dropout(x),z], dim=-1)
