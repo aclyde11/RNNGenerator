@@ -76,7 +76,8 @@ class DecoderCharRNN(nn.Module):
         # do stuff to train
 
         if force:
-            x, _ = self.lstm(x_actual)
+            print(x_actual.shape, z.shape)
+            x, _ = self.lstm(torch.cat([x_actual, z], dim=-1))
 
             x = self.linear(x)
             if with_softmax:
