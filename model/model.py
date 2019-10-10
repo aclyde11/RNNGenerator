@@ -67,7 +67,7 @@ class DecoderCharRNN(nn.Module):
         self.max_len = max_len
 
         self.vocab_size = vocab_size
-        self.num_layers= 4
+        self.num_layers= 2
         self.lstm = nn.LSTM(z_size + emb_size, 256, dropout=0.3, num_layers=self.num_layers)
         self.linear = nn.Linear(256, vocab_size)
         self.dropout = nn.Dropout(0.1)

@@ -48,7 +48,7 @@ def get_input_data(fname, c2i):
     return lines1, lines2
 
 
-def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150, alpha=0.2, num_layers=4):
+def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150, alpha=0.2, num_layers=2):
     model.eval()
     with torch.no_grad():
 
