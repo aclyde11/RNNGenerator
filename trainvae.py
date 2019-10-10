@@ -116,7 +116,7 @@ def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
-        pred, (mu, logvar) = model(y, return_mu=True, force=(epoch < 4), prob_forcing=max(0, 0.9 - (epoch * 0.05)))
+        pred, (mu, logvar) = model(y, return_mu=True, force=(epoch < 5), prob_forcing=max(0, 1.0 - (epoch * 0.05)))
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
