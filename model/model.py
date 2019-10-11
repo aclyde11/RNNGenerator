@@ -36,7 +36,7 @@ class EncoderCharRNN(nn.Module):
         self.max_len = max_len
         self.emb  = nn.Embedding(vocab_size, emb_size)
         self.emb.weight.requires_grad = False
-        self.lstm = nn.LSTM(emb_size, 256, bidirectional=True, dropout=0.1, num_layers=2)
+        self.lstm = nn.RNN(emb_size, 256, bidirectional=True, dropout=0, num_layers=2)
         self.linear1 = nn.Linear(256, z_dim)
         self.linear2 = nn.Linear(256, z_dim)
 
