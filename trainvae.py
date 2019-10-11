@@ -52,7 +52,7 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150,
     model.eval()
     with torch.no_grad():
 
-        h = (torch.zeros((num_layers, batch_size, 256)).to(device), torch.zeros((num_layers, batch_size, 256)).to(device))
+        h = torch.zeros((num_layers, batch_size, 256)).to(device) #, torch.zeros((num_layers, batch_size, 256)).to(device))
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
         z = torch.randn((1, batch_size, z_dim)).to(device)
@@ -117,7 +117,7 @@ def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
                                                              total_length=config['max_len'])
-        pred, (mu, logvar) = model(y, return_mu=True, force=(epoch < 5), prob_forcing=max(0, 1.0 - (epoch * 0.05)))
+        pred, (mu, logvar) = model(y, return_mu=True, force=(epoch < 1), prob_forcing=max(0, 1.0 - (epoch * 0.05)))
         packed_seq_hat = packed_seq_hat.view(-1).long()
         pred = pred.view(batch_size * config['max_len'], -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
