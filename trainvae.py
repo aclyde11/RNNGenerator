@@ -18,7 +18,7 @@ def getconfig(args):
         'emb_size': 32,
         'sample_freq': 1,
         'max_len': 180,
-        'z_size' : 6
+        'z_size' : 3
     }
 
     return config_
@@ -109,7 +109,7 @@ def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
-    beta = ((1e-2) / float(config['max_len']) ) * (5 * epoch)
+    beta = ((1e-2) / float(config['max_len']) ) * (1 * epoch)
     iters = tqdm(enumerate(dataloader), postfix={'loss' : 0, 'kl' : 0})
     for i, (y, y_hat) in iters:
         optimizer.zero_grad()
