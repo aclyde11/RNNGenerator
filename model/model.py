@@ -67,7 +67,7 @@ class DecoderCharRNN(nn.Module):
 
         self.vocab_size = vocab_size
         self.num_layers= 2
-        self.lstm = nn.GRU(z_size + emb_size, 256, dropout=0.3, num_layers=self.num_layers)
+        self.lstm = nn.GRU(z_size, 256, dropout=0.1, num_layers=self.num_layers)
         self.linear = nn.Linear(256, vocab_size)
         self.dropout = nn.Dropout(0.1)
 
@@ -75,40 +75,68 @@ class DecoderCharRNN(nn.Module):
     def forward(self, x_actual, z, endchar, startchar, ember, force=True, prob_forcing=0.25, with_softmax=False):
         # do stuff to train
 
-        if force:
-            x, _ = self.lstm(torch.cat([x_actual, z], dim=-1))
-
-            x = self.linear(x)
-            if with_softmax:
-                return F.softmax(x, dim=-1)
-            else:
-                return x
-
+        # if force:
+        x, _ = self.lstm(z)
+        x = self.linear(x)
+        if with_softmax:
+            return F.softmax(x, dim=-1)
         else:
-            dv = z.device
-            batch_size = z.shape[1]
-            h = torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)) #, torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)))
-            x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+            return x
 
-            x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
-            for i in range(1, self.max_len):
-                if i == 1 or (random.random() < prob_forcing):
-                    x_emb = (x_actual[i - 1, :]).unsqueeze(0)
-                else:
-                    x_emb = ember(x[i - 1, :]).unsqueeze(0)
+        # else:
+        #     dv = z.device
+        #     batch_size = z.shape[1]
+        #     h = torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)) #, torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)))
+        #     x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+        #     x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
+        #     for i in range(1, self.max_len):
+        #         if i == 1 or (random.random() < prob_forcing):
+        #             x_emb = (x_actual[i - 1, :]).unsqueeze(0)
+        #         else:
+        #             x_emb = ember(x[i - 1, :]).unsqueeze(0)
+        #
+        #         x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
+        #         o, h = self.lstm(x_emb, (h))
+        #         y = self.linear(o.squeeze(0))
+        #         x_res[i] = y
+        #         y = F.softmax(y / 1.0, dim=-1)
+        #         w = torch.argmax(y, dim=-1).squeeze()
+        #         x[i] = w
 
-                x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
-                o, h = self.lstm(x_emb, (h))
-                y = self.linear(o.squeeze(0))
-                x_res[i] = y
-                y = F.softmax(y / 1.0, dim=-1)
-                w = torch.argmax(y, dim=-1).squeeze()
-                x[i] = w
-
-            if with_softmax:
-                return F.softmax(x_res, dim=-1)
-            else:
-                return x_res
+        # if force:
+        #     x, _ = self.lstm(torch.cat([x_actual, z], dim=-1))
+        #
+        #     x = self.linear(x)
+        #     if with_softmax:
+        #         return F.softmax(x, dim=-1)
+        #     else:
+        #         return x
+        #
+        # else:
+        #     dv = z.device
+        #     batch_size = z.shape[1]
+        #     h = torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)) #, torch.autograd.Variable(torch.zeros((self.num_layers, batch_size, 256)).to(dv)))
+        #     x = torch.autograd.Variable(torch.tensor(startchar)).unsqueeze(0).unsqueeze(0).repeat((self.max_len, batch_size)).to(dv)
+        #
+        #     x_res = torch.autograd.Variable(torch.zeros((x_actual.shape[0], x_actual.shape[1], self.vocab_size))).to(dv)
+        #     for i in range(1, self.max_len):
+        #         if i == 1 or (random.random() < prob_forcing):
+        #             x_emb = (x_actual[i - 1, :]).unsqueeze(0)
+        #         else:
+        #             x_emb = ember(x[i - 1, :]).unsqueeze(0)
+        #
+        #         x_emb = torch.cat([x_emb, z[i].unsqueeze(0)], dim=-1)
+        #         o, h = self.lstm(x_emb, (h))
+        #         y = self.linear(o.squeeze(0))
+        #         x_res[i] = y
+        #         y = F.softmax(y / 1.0, dim=-1)
+        #         w = torch.argmax(y, dim=-1).squeeze()
+        #         x[i] = w
+        #
+        #     if with_softmax:
+        #         return F.softmax(x_res, dim=-1)
+        #     else:
+        #         return x_res
 
     def sample(self):
         return None
