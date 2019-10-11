@@ -68,7 +68,8 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150,
             o, h = model.decoder.lstm(x_emb, (h))
             y = model.decoder.linear(o.squeeze(0))
             y = F.softmax(y / temp, dim=-1)
-            w = torch.multinomial(y, 1).squeeze()
+            #w = torch.multinomial(y, 1).squeeze()
+            w = torch.argmax(y, dim=-1).squeeze()
             x[i, ~eos_mask] = w[~eos_mask]
 
             i_eos_mask = ~eos_mask & (w == c2i(END_CHAR))
