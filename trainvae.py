@@ -12,7 +12,7 @@ import os
 
 def getconfig(args):
     config_ = {
-        'epochs': 500,
+        'epochs': 220,
         'batch_size': 128,
         'vocab_size': 28,
         'emb_size': 32,
@@ -55,8 +55,8 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150,
         h = (torch.zeros((num_layers, batch_size, 256)).to(device), torch.zeros((num_layers, batch_size, 256)).to(device))
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
-        #z = torch.randn((1, batch_size, z_dim)).to(device)
-        z = torch.zeros((1, batch_size, z_dim)).to(device)
+        z = torch.randn((1, batch_size, z_dim)).to(device)
+
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
         for i in range(1, max_len):
@@ -68,7 +68,7 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150,
             o, h = model.decoder.lstm(x_emb, (h))
             y = model.decoder.linear(o.squeeze(0))
             y = F.softmax(y / temp, dim=-1)
-            #w = torch.multinomial(y, 1).squeeze()
+            # w = torch.multinomial(y, 1).squeeze()
             w = torch.argmax(y, dim=-1).squeeze()
             x[i, ~eos_mask] = w[~eos_mask]
 
@@ -108,7 +108,7 @@ def train_epoch(model, optimizer, dataloader, config, device, epoch=1):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
-    beta = ((1e-1) / float(config['max_len']) ) * (5 * epoch)
+    beta = ((1e-2) / float(config['max_len']) ) * (5 * epoch)
     iters = tqdm(enumerate(dataloader), postfix={'loss' : 0, 'kl' : 0})
     for i, (y, y_hat) in iters:
         optimizer.zero_grad()
@@ -160,22 +160,22 @@ def main(args, device):
         optimizer.load_state_dict(pt['optim_state_dict'])
         epoch_start = pt['epoch'] + 1
 
-    #with open(args.logdir + "/training_log.csv", 'w') as flog:
-        #flog.write("epoch,train_loss,sampled,valid")
-    for epoch in range(epoch_start, config['epochs']):
-        #avg_loss = train_epoch(model, optimizer, dataloader, config, device, epoch=epoch)
-        samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=8, max_len=config['max_len'])
-        valid = count_valid_samples(samples)
-        print(samples)
-        print("Total valid samples:", valid, float(valid))
-        #flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
-        # torch.save(
-        #     {
-        #         'state_dict' : model.state_dict(),
-        #         'optim_state_dict' : optimizer.state_dict(),
-        #         'epoch' : epoch
-        #     }, args.logdir + "/autosave.model.pt"
-        # )
+    with open(args.logdir + "/training_log.csv", 'w') as flog:
+        flog.write("epoch,train_loss,sampled,valid")
+        for epoch in range(epoch_start, config['epochs']):
+            avg_loss = train_epoch(model, optimizer, dataloader, config, device, epoch=epoch)
+            samples = sample(model, i2c, c2i, device, config['z_size'], batch_size=8, max_len=config['max_len'])
+            valid = count_valid_samples(samples)
+            print(samples)
+            print("Total valid samples:", valid, float(valid))
+            flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
+            torch.save(
+                {
+                    'state_dict' : model.state_dict(),
+                    'optim_state_dict' : optimizer.state_dict(),
+                    'epoch' : epoch
+                }, args.logdir + "/autosave.model.pt"
+            )
 
 
 if __name__ == '__main__':
