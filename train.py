@@ -116,10 +116,10 @@ def train_epoch(model, optimizer, dataloader, config, device):
         loss.backward()
         losses.append(loss.item())
         optimizer.step()
-        if counters > 100:
-            break
-        else:
-            counters += 1
+        # if counters > 100:
+        #     break
+        # else:
+        #     counters += 1
 
 
     return np.array(losses).flatten().mean()
