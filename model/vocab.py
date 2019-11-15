@@ -56,36 +56,36 @@ def main(args):
             randomSmiles('CNOPc1ccccc1', 10)
         except:
             print("Must set --permute_smiles to 0, cannot import RdKit. Smiles validity not being checked either.")
-
-    #first step generate vocab.
-    count = 0
-    vocab = set()
-    vocab.update([START_CHAR, END_CHAR])
-    print(vocab)
-    with open(args.i, 'r') as f:
-        for line in f:
-            smi = line.strip()
-            count += 1
-            if len(smi) > args.maxlen - 2:
-                continue
-            vocab.update(smi)
-
-    vocab = list(vocab)
-    with open(args.o + '/vocab.txt', 'w') as f:
-        for v in vocab:
-            f.write(v + '\n')
-
-
-    print("Read ", count,"smiles.")
-    print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
+    #
+    # #first step generate vocab.
+    # count = 0
+    # vocab = set()
+    # vocab.update([START_CHAR, END_CHAR])
+    # print(vocab)
+    # with open(args.i, 'r') as f:
+    #     for line in f:
+    #         smi = line.strip()
+    #         count += 1
+    #         if len(smi) > args.maxlen - 2:
+    #             continue
+    #         vocab.update(smi)
+    #
+    # vocab = list(vocab)
+    # with open(args.o + '/vocab.txt', 'w') as f:
+    #     for v in vocab:
+    #         f.write(v + '\n')
+    #
+    #
+    # print("Read ", count,"smiles.")
+    # print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
 
     #seconnd step is to make data:
-    count_=count
+    # count_=count
     count = 0
     _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
-            for line in tqdm(f, total=count_):
+            for line in tqdm(f):
                 smis = line.strip()
                 if args.permute_smiles != 0:
                     smis = randomSmiles(smis, max_len=args.maxlen, attempts=args.permute_smiles)
