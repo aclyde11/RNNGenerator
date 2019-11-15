@@ -104,7 +104,7 @@ def main(args):
                         o.write(','.join(i) + '\n')
                         count += 1
                     except:
-                        print("key error did not print.")
+                        print("key error did not print.", count)
                         continue
     print("Output",count,"smiles.")
 
