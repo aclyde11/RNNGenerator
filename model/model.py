@@ -23,8 +23,6 @@ class VAERNN(nn.Module):
         else:
             return x
 
-
-
     def sample_z(self, mu, log_var):
         # Using reparameterization trick to sample from a gaussian
         eps = torch.autograd.Variable(torch.randn(mu.shape)).to(mu.device)
