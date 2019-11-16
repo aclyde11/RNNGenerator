@@ -77,15 +77,6 @@ def FromString(smiles, isomer=True, num_enantiomers=1):
 
 
 def rocs(refmol):
-    fitfs = oechem.oemolistream("test.sdf")
-
-
-    options = oeshape.OEROCSOptions()
-    options.SetNumBestHits(1)
-    rocs = oeshape.OEROCS(options)
-
-    rocs.SetDatabase(fitfs)
-
     mols = []
     for f in tqdm(glob('/Users/austin/Downloads/template_ligands/*.mol2')):
         ifs = oechem.oemolistream(f)
@@ -94,11 +85,6 @@ def rocs(refmol):
         mols.append(mol)
 
     test_confomrmers(mols)
-    # max_score = 0
-    # for m in tqdm(mols):
-    #     for res in rocs.Overlay(m):
-    #         # outmol = res.GetOverlayConfs()
-    #         max_score = max(res.GetTanimotoCombo(), max_score)
 
 
 
@@ -109,7 +95,7 @@ def main(argv):
 
     confs = FromMol(s)
     print(len(confs))
-    print(confs[0].GetMaxConfIdx())
+    print(confs[0].GetMaxConfIdx()) # stores confs in test.sdf
 
     rocs(None)
 
