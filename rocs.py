@@ -3,6 +3,30 @@ from openeye import oechem
 from openeye import oeshape
 from openeye import oeomega
 from tqdm import tqdm
+from glob import glob
+import numpy as np
+import multiprocessing
+
+def run_one_roc(mol):
+    fitfs = oechem.oemolistream("test.sdf")
+
+    options = oeshape.OEROCSOptions()
+    options.SetNumBestHits(1)
+    rocs = oeshape.OEROCS(options)
+
+    rocs.SetDatabase(fitfs)
+    max_score = 0
+    for res in rocs.Overlay(mol):
+        max_score = max(res.GetTanimotoCombo(), max_score)
+    return max_score
+
+def test_confomrmers(mols):
+    pool = multiprocessing.Pool(10)
+    res = pool.imap_unordered(run_one_roc, mols)
+    max_score = 0
+    for i in tqdm(res, total=len(mols)):
+        max_score = max(max_score, i)
+    print(max_score)
 
 def FromMol(mol, isomer=True, num_enantiomers=-1):
     """
@@ -16,7 +40,7 @@ def FromMol(mol, isomer=True, num_enantiomers=-1):
     omegaOpts.SetMaxConfs(199)
     omega = oeomega.OEOmega(omegaOpts)
     out_conf = []
-
+    ofs = oechem.oemolostream("test.sdf")
     if not isomer:
         ret_code = omega.Build(mol)
         if ret_code == oeomega.OEOmegaReturnCode_Success:
@@ -31,6 +55,7 @@ def FromMol(mol, isomer=True, num_enantiomers=-1):
             if ret_code == oeomega.OEOmegaReturnCode_Success:
                 out_conf.append(enantiomer)
                 num_enantiomers -= 1
+                oechem.OEWriteMolecule(ofs, mol)
                 if num_enantiomers == 0:
                     break
             else:
@@ -52,28 +77,41 @@ def FromString(smiles, isomer=True, num_enantiomers=1):
 
 
 def rocs(refmol):
-    fitfs = oechem.oemolistream("/Users/austin/Downloads/template_ligands/alls.mol2")
+    fitfs = oechem.oemolistream("test.sdf")
+
 
     options = oeshape.OEROCSOptions()
     options.SetNumBestHits(1)
     rocs = oeshape.OEROCS(options)
+
     rocs.SetDatabase(fitfs)
-    for res in tqdm(rocs.Overlay(refmol)):
-        outmol = res.GetOverlayConfs()
-        print("title: %s  tanimoto combo = %.2f" % (outmol.GetTitle(), res.GetTanimotoCombo(),))
+
+    mols = []
+    for f in tqdm(glob('/Users/austin/Downloads/template_ligands/*.mol2')):
+        ifs = oechem.oemolistream(f)
+        mol = oechem.OEGraphMol()
+        oechem.OEReadMolecule(ifs, mol)
+        mols.append(mol)
+
+    test_confomrmers(mols)
+    # max_score = 0
+    # for m in tqdm(mols):
+    #     for res in rocs.Overlay(m):
+    #         # outmol = res.GetOverlayConfs()
+    #         max_score = max(res.GetTanimotoCombo(), max_score)
+
+
 
 def main(argv):
 
-    s = FromString("CC(=O)OC1=CC=CC=C1C(=O)O")[0]
+    # s = FromString("CC(=O)OC1=CC=CC=C1C(=O)O")[0]
     s = FromString("C1CCC(C1)C(CC#N)N2C=C(C=N2)C3=C4C=CNC4=NC=N3")[0]
 
-    print(s)
     confs = FromMol(s)
     print(len(confs))
     print(confs[0].GetMaxConfIdx())
-    for i in confs[0].GetConfs():
-        print(i)
-    rocs(confs[0])
+
+    rocs(None)
 
 
 
