@@ -1,16 +1,34 @@
 from FPSim2.io import create_db_file
 from FPSim2 import FPSim2Engine
 import timeit
+from tqdm import tqdm
 fp_filename = 'chembl.h5'
-query = ['CC(=O)Oc1ccccc1C(=O)O', 'CC(=O)Oc1ccccc1C(=O)O', 'CC(=O)Oc1ccccc1C(=O)O', 'CC(=O)Oc1ccccc1C(=O)O', 'CC(=O)Oc1ccccc1C(=O)O', 'CC(=O)Oc1ccccc1C(=O)O']
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit import DataStructs
+with open("kinasesmiles/john_smiles_kinasei.smi", 'r') as f:
+    smiles = map(lambda x : x.split(' ')[0], f.readlines())
 
-fpe = FPSim2Engine(fp_filename)
+fps = []
+for smi in tqdm(smiles):
+    m = Chem.MolFromSmiles(smi)
+    if m is None:
+        continue
+    fp1 = AllChem.GetMorganFingerprint(m, 2)
+    fps.append(fp1)
 
-results_ = []
-for q in query:
-    results = fpe.similarity(q, 0.5, n_workers=4)
-    results_.append(results)
 
+with open("test.txt", 'r') as f:
+    with open("out.txt", 'r') as fout:
+        for smi in tqdm(f):
+            smi = smi.strip()
+            m = Chem.MolFromSmiles(smi)
+            if m is None:
+                fout.write(smi + ','+ 'NaN\n')
+                continue
 
-x = timeit.timeit('[fpe.similarity(q, 0.5, n_workers=1) for q in query]', number=100, setup="from __main__ import fpe, query")
-print(x )
+            fp2 = AllChem.GetMorganFingerprint(m,2)
+            max_sim = 0
+            for fp1 in fps:
+                max_sim = max(max_sim, DataStructs.TanimotoSimilarity(fp1,fp2))
+            fout.write(smi + ','+ str(max_sim) + '\n')

@@ -8,7 +8,7 @@ import numpy as np
 import multiprocessing
 
 def run_one_roc(mol):
-    fitfs = oechem.oemolistream("test.sdf")
+    fitfs = oechem.oemolistream("/Users/austin/Downloads/template_ligands/alls.mol2")
 
     options = oeshape.OEROCSOptions()
     options.SetNumBestHits(1)
@@ -77,14 +77,9 @@ def FromString(smiles, isomer=True, num_enantiomers=1):
 
 
 def rocs(refmol):
-    mols = []
-    for f in tqdm(glob('/Users/austin/Downloads/template_ligands/*.mol2')):
-        ifs = oechem.oemolistream(f)
-        mol = oechem.OEGraphMol()
-        oechem.OEReadMolecule(ifs, mol)
-        mols.append(mol)
 
-    test_confomrmers(mols)
+    print(refmol)
+    run_one_roc(refmol[0])
 
 
 
@@ -95,9 +90,9 @@ def main(argv):
 
     confs = FromMol(s)
     print(len(confs))
-    print(confs[0].GetMaxConfIdx()) # stores confs in test.sdf
+    print(confs[1].GetMaxConfIdx()) # stores confs in test.sdf
 
-    rocs(None)
+    print(rocs(confs))
 
 
 
