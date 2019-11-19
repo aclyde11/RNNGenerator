@@ -22,6 +22,7 @@ import sys
 import argparse
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 from openeye import oechem
 from openeye import oeomega
 from openeye import oefastrocs
@@ -118,20 +119,16 @@ def main(argv=[__name__]):
 
     df = pd.read_csv(args.i)
     res = {}
-    for smile in df.loc[:, 'smiles'].tolist():
-
-        # read in query
+    for smile in tqdm(df.loc[:, 'smiles'].tolist()):
         try:
             q = FromMol(FromString(smile)[0])[0]
             numHits = moldb.NumMols()
             for score in dbase.GetSortedScores(q, numHits):
-                dbmol = oechem.OEMol()
-                molidx = score.GetMolIdx()
-                print(dbmol, molidx)
-                print(score.GetTanimotoCombo())
                 res[smile] = score.GetTanimotoCombo()
-                print(res[smile])
                 break
+        except KeyboardInterrupt:
+            print("caught")
+            exit()
         except:
             res[smile] = np.nan
 
