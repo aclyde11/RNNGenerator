@@ -120,6 +120,7 @@ def main(argv=[__name__]):
     df = pd.read_csv(args.i)
     res = []
     for smile in tqdm(df.loc[:, 'smiles'].tolist()):
+        resn = len(res)
         try:
             q = FromMol(FromString(smile)[0])[0]
             numHits = moldb.NumMols()
@@ -130,7 +131,9 @@ def main(argv=[__name__]):
             print("caught")
             exit()
         except:
-            res[smile] = np.nan
+            res.append(np.nan)
+        if len(res) == resn:
+            res.append(np.nan)
 
     df['fastroc'] = res
     print(df.head)
