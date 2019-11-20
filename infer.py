@@ -117,7 +117,7 @@ def main(args, device):
 
     df = pd.DataFrame()
     df['smiles'] = smiles
-    df.to_csv(args.o, index=False)
+    df.to_csv(args.o, index=False, header=True)
 
     print("output smiles to", args.o)
     print("Took ", end - start, "seconds")
