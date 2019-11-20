@@ -1,6 +1,7 @@
 import argparse
 import time
 
+import pandas as pd
 import torch
 import torch.nn.functional as F
 import torch.nn.utils.rnn
@@ -18,6 +19,7 @@ def count_valid_samples(smiles, rdkit=True):
         lg = RDLogger.logger()
 
         lg.setLevel(RDLogger.CRITICAL)
+
         def toMol(smi):
             try:
                 mol = Chem.MolFromSmiles(smi)
@@ -108,13 +110,17 @@ def main(args, device):
     total_unqiue += len(smiles)
     end = time.time()
 
-    with open(args.o, 'w') as f:
-        for i in smiles:
-            f.write(i)
-            f.write('\n')
+    # with open(args.o, 'w') as f:
+    #     for i in smiles:
+    #         f.write(i)
+    #         f.write('\n')
+
+    df = pd.DataFrame()
+    df['smiles'] = smiles
+    df.to_csv(args.o, index=False)
 
     print("output smiles to", args.o)
-    print("Took ", end-start, "seconds")
+    print("Took ", end - start, "seconds")
     print("Sampled", total_sampled)
     print("Total unique", total_unqiue, float(total_unqiue) / float(total_sampled))
     if args.vr or args.vb:
