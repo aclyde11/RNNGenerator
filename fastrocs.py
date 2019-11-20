@@ -118,13 +118,13 @@ def main(argv=[__name__]):
 
 
     df = pd.read_csv(args.i)
-    res = {}
+    res = []
     for smile in tqdm(df.loc[:, 'smiles'].tolist()):
         try:
             q = FromMol(FromString(smile)[0])[0]
             numHits = moldb.NumMols()
             for score in dbase.GetSortedScores(q, numHits):
-                res[smile] = score.GetTanimotoCombo()
+                res.append(score.GetTanimotoCombo())
                 break
         except KeyboardInterrupt:
             print("caught")
@@ -132,8 +132,9 @@ def main(argv=[__name__]):
         except:
             res[smile] = np.nan
 
-    results = pd.DataFrame.from_dict(res).T
-    print(results.head())
+    df['fastroc'] = res
+    print(df.head)
+    df.to_csv(args.o, sep=',', index=False)
 
     return 0
 
