@@ -119,7 +119,7 @@ def main(argv=[__name__]):
 
     df = pd.read_csv(args.i)
     res = {}
-    for smile in tqdm(df.loc[:100, 'smiles'].tolist()):
+    for smile in tqdm(df.loc[:, 'smiles'].tolist()):
         try:
             q = FromMol(FromString(smile)[0])[0]
             numHits = moldb.NumMols()
