@@ -119,7 +119,7 @@ def main(argv=[__name__]):
 
     df = pd.read_csv(args.i)
     res = {}
-    for smile in tqdm(df.loc[:, 'smiles'].tolist()):
+    for smile in tqdm(df.loc[:100, 'smiles'].tolist()):
         try:
             q = FromMol(FromString(smile)[0])[0]
             numHits = moldb.NumMols()
@@ -132,7 +132,7 @@ def main(argv=[__name__]):
         except:
             res[smile] = np.nan
 
-    results = df.DataFrame.from_dict(res).T
+    results = pd.DataFrame.from_dict(res).T
     print(results.head())
 
     return 0
