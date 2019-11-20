@@ -8,9 +8,7 @@ from rdkit.Chem import AllChem
 from tqdm import tqdm
 
 def getmaxsmi(smi):
-    print(smi)
-    if len(smi) <= 0:
-        return np.nan
+    smi = str(smi)
     smi = smi.strip()
     m = Chem.MolFromSmiles(smi)
     if m is None:
