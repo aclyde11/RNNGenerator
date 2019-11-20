@@ -27,7 +27,7 @@ def compute_fp_dict(source="kinasesmiles/john_smiles_kinasei.smi"):
         smiles = map(lambda x: x.split(' ')[0], f.readlines())
 
     fps = []
-    for smi in tqdm(smiles[:100]):
+    for smi in tqdm(list(smiles)[:100]):
         m = Chem.MolFromSmiles(smi)
         if m is None:
             continue
