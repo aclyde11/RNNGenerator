@@ -12,7 +12,7 @@ import os
 
 def getconfig(args):
     config_ = {
-        'epochs': 45,
+        'epochs': 10,
         'batch_size': 128,
         'vocab_size': 28,
         'emb_size': 32,
