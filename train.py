@@ -150,21 +150,38 @@ def main(args, device):
         epoch_start = pt['epoch'] + 1
 
     with open(args.logdir + "/training_log.csv", 'w') as flog:
-        flog.write("epoch,train_loss,sampled,valid")
-        for epoch in range(epoch_start, config['epochs']):
-            avg_loss = train_epoch(model, optimizer, dataloader, config, device)
-            samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
-            valid = count_valid_samples(samples)
-            print(samples)
-            print("Total valid samples:", valid, float(valid) / 1024)
-            flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
-            torch.save(
-                {
-                    'state_dict' : model.state_dict(),
-                    'optim_state_dict' : optimizer.state_dict(),
-                    'epoch' : epoch
-                }, args.logdir + "/autosave.model.pt"
-            )
+        if args.e is None:
+            flog.write("epoch,train_loss,sampled,valid")
+            for epoch in range(epoch_start, config['epochs']):
+                avg_loss = train_epoch(model, optimizer, dataloader, config, device)
+                samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
+                valid = count_valid_samples(samples)
+                print(samples)
+                print("Total valid samples:", valid, float(valid) / 1024)
+                flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
+                torch.save(
+                    {
+                        'state_dict' : model.state_dict(),
+                        'optim_state_dict' : optimizer.state_dict(),
+                        'epoch' : epoch
+                    }, args.logdir + "/autosave.model.pt"
+                )
+        else:
+            flog.write("epoch,train_loss,sampled,valid")
+            for epoch in range(epoch_start, epoch_start + args.e):
+                avg_loss = train_epoch(model, optimizer, dataloader, config, device)
+                samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
+                valid = count_valid_samples(samples)
+                print(samples)
+                print("Total valid samples:", valid, float(valid) / 1024)
+                flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
+                torch.save(
+                    {
+                        'state_dict' : model.state_dict(),
+                        'optim_state_dict' : optimizer.state_dict(),
+                        'epoch' : epoch
+                    }, args.logdir + "/autosave.model.pt"
+                )
 
 
 if __name__ == '__main__':
@@ -173,6 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
     parser.add_argument('--ct', help='continue training for longer', type=bool, default=False)
+    parser.add_argument('-e', type=int, required=False, default=None)
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("Device: ", device)
