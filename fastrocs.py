@@ -85,7 +85,7 @@ def main():
     timer = oechem.OEWallTimer()
     opts = oefastrocs.OEShapeDatabaseOptions()
     opts.SetLimit(1)
-    dbase = oefastrocs.OEShapeDatabase(opts)
+    dbase = oefastrocs.OEShapeDatabase()
     moldb = oechem.OEMolDatabase()
 
 
