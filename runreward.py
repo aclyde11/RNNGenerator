@@ -34,7 +34,7 @@ if '__name__' == '__main__':
 
     assert(('fastroc' in df.columns.tolist()) and ('sim' in df.columns.tolist()) and ('smiles' in df.columns.tolist()))
 
-    df = df[df.sim <= 0.6]
+    df = df[df.sim <= 0.65]
     df['molsize'] = df.smiles.apply(get_counts)
     df['qed'] = df.smiles.apply(get_counts)
     df['sa'] = df.smiles.apply(get_sa)
@@ -47,7 +47,7 @@ if '__name__' == '__main__':
 
     w1 = -1.0 # sim
     w2 = 5.0 # fast roc
-    w3 = 5.0 #size
+    w3 = 2.0 #size
     w4 = 1.0 # qed
     w5 = 1.0 # sa
 
