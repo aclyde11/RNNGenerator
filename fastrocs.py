@@ -30,7 +30,7 @@ def FromMol(mol, isomer=True, num_enantiomers=-1):
         num_enantiomers is the allowable number of enantiomers. For all, set to -1
     """
     omegaOpts = oeomega.OEOmegaOptions()
-    omegaOpts.SetMaxConfs(199)
+    omegaOpts.SetMaxConfs(10)
     omega = oeomega.OEOmega(omegaOpts)
     out_conf = []
     ofs = oechem.oemolostream("test.sdf")
@@ -83,8 +83,14 @@ def main():
 
     print("Opening database file %s ..." % dbname)
     timer = oechem.OEWallTimer()
-    dbase = oefastrocs.OEShapeDatabase()
+    opts = oefastrocs.OEShapeDatabaseOptions()
+    opts.SetLimit(1)
+    dbase = oefastrocs.OEShapeDatabase(opts)
     moldb = oechem.OEMolDatabase()
+
+
+
+
     if not moldb.Open(ifs):
         oechem.OEThrow.Fatal("Unable to open '%s'" % dbname)
 
@@ -102,8 +108,8 @@ def main():
         resn = len(res)
         try:
             q = FromMol(FromString(smile)[0])[0]
-            numHits = moldb.NumMols()
-            for score in dbase.GetSortedScores(q, numHits):
+
+            for score in dbase.GetSortedScores(q, 1):
                 res.append(score.GetTanimotoCombo())
                 break
         except KeyboardInterrupt:
