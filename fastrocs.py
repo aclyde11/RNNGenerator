@@ -107,7 +107,7 @@ def main():
     for smile in tqdm(df.loc[:, 'smiles'].tolist()):
         resn = len(res)
         try:
-            q = FromMol(FromString(smile)[0])[0]
+            q = FromString(smile)[0]
 
             for score in dbase.GetSortedScores(q, 1):
                 res.append(score.GetTanimotoCombo())
