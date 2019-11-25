@@ -27,7 +27,7 @@ def get_args():
     parser.add_argument('n', help='how many to sample', type=int)
     return parser.parse_args()
 
-if '__name__' == '__main__':
+if __name__ == '__main__':
     args = get_args()
     df = pd.read_csv(args.i)
     print("Loaded csv with", df.shape[0], "rows")
