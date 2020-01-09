@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 from functools import partial
 import multiprocessing
-
+import config
 START_CHAR = '%'
 END_CHAR = '^'
 
@@ -53,6 +53,7 @@ def randomSmiles(smi, max_len=150, attempts=100):
 
 
 def main(args):
+    config = config.config
     if args.permute_smiles != 0:
         try:
             randomSmiles('CNOPc1ccccc1', 10)
@@ -88,13 +89,13 @@ def main(args):
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
             with multiprocessing.Pool(args.n) as p:
-                smiss = p.imap_unordered(partial(randomSmiles, max_len=args.maxlen, attempts=args.permute_smiles),
+                smiss = p.imap_unordered(partial(randomSmiles, max_len=config['maxlen'], attempts=args.permute_smiles),
                                         map(lambda x : x.strip(), f))
                 for smis in tqdm(smiss):
                     if smis is None:
                         continue
                     for smi in smis:
-                        if len(smi) > args.maxlen - 2:
+                        if len(smi) > config['maxlen'] - 2:
                             continue
                         try:
                             i = list(map(lambda x : str(c2i(x)), smi))
@@ -110,7 +111,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', type=str, required=True, help='input file with single smile per line')
     parser.add_argument('-o', type=str, required=True, help='output directory where preprocressed data and vocab will go')
-    parser.add_argument('--maxlen', type=int, required=True, help='max length for smile strings to be')
     parser.add_argument('--permute_smiles', type=int, help='generates permutations of smiles', default=0)
     parser.add_argument('--start', action='store_true')
     parser.add_argument('-n', default=1, type=int)

@@ -9,18 +9,10 @@ import torch.nn.utils.rnn
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
+import config
 
 def getconfig(args):
-    config_ = {
-        'epochs': 10,
-        'batch_size': 128,
-        'vocab_size': 28,
-        'emb_size': 32,
-        'sample_freq': 1,
-        'max_len': 180
-    }
-
-    return config_
+    return config.config, args
 
 def count_valid_samples(smiles):
     from rdkit import Chem
@@ -116,17 +108,12 @@ def train_epoch(model, optimizer, dataloader, config, device):
         loss.backward()
         losses.append(loss.item())
         optimizer.step()
-        # if counters > 100:
-        #     break
-        # else:
-        #     counters += 1
-
 
     return np.array(losses).flatten().mean()
 
 
 def main(args, device):
-    config = getconfig(args)
+    config, args = getconfig(args)
     print("loading data.")
     vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
     print("Vocab size is", len(vocab))
@@ -135,11 +122,11 @@ def main(args, device):
     print("Done.")
 
     ## make data generator
-    dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=config['batch_size'],
+    dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=args.b,
                                              collate_fn=mycollate)
 
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=5e-4)
 
     epoch_start = 0
     if args.ct:
@@ -154,7 +141,7 @@ def main(args, device):
             flog.write("epoch,train_loss,sampled,valid")
             for epoch in range(epoch_start, config['epochs']):
                 avg_loss = train_epoch(model, optimizer, dataloader, config, device)
-                samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
+                samples = sample(model, i2c, c2i, device, batch_size=args.b , max_len=config['max_len'])
                 valid = count_valid_samples(samples)
                 print(samples)
                 print("Total valid samples:", valid, float(valid) / 1024)
@@ -168,9 +155,9 @@ def main(args, device):
                 )
         else:
             flog.write("epoch,train_loss,sampled,valid")
-            for epoch in range(epoch_start, epoch_start + args.e):
+            for epoch in tqdm(range(epoch_start, epoch_start + args.e), desc="train iter"):
                 avg_loss = train_epoch(model, optimizer, dataloader, config, device)
-                samples = sample(model, i2c, c2i, device, batch_size=1024, max_len=config['max_len'])
+                samples = sample(model, i2c, c2i, device, batch_size=args.b, max_len=config['max_len'])
                 valid = count_valid_samples(samples)
                 print(samples)
                 print("Total valid samples:", valid, float(valid) / 1024)
@@ -188,11 +175,15 @@ if __name__ == '__main__':
     print("Note: This script is very picky. This will only run on a GPU. ")
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
+    parser.add_argument('-b', help='batch size', type=int, default=256)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
     parser.add_argument('--ct', help='continue training for longer', type=bool, default=False)
-    parser.add_argument('-e', type=int, required=False, default=None)
+    parser.add_argument('-e', type=int, default=10)
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+
     print("Device: ", device)
     path = args.logdir
     try:
