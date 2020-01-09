@@ -9,6 +9,8 @@ import torch.nn.utils.rnn
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
+from functools import partial
+import multiprocessing
 import config
 
 def getconfig(args):
@@ -26,15 +28,21 @@ def count_valid_samples(smiles):
             count += 1
     return count
 
-def get_input_data(fname, c2i):
-    lines = open(fname, 'r').readlines()
-    lines = list(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), lines)))))
+def samplegen(y, c2i):
+    y = y.split(",")
+    return torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)), torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i(END_CHAR)], dtype=np.int64))
 
-    lines1 = [torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)) for y in
-              lines]
-    lines2 = [torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i(END_CHAR)], dtype=np.int64)) for y in
-              lines]
-    print("Read", len(lines2), "SMILES.")
+
+def get_input_data(fname, c2i):
+    lines1 = []
+    lines2 = []
+    with open(fname, 'r') as f:
+        with multiprocessing.Pool(8) as p:
+            lines = filter(lambda x: len(x) != 0, map(lambda x: x.strip(), f))
+            lines = p.imap_unordered(partial(samplegen, c2i=c2i), lines)
+            for i,j in tqdm(lines, desc='loading data'):
+                lines1.append(i)
+                lines2.append(j)
 
     return lines1, lines2
 
@@ -155,7 +163,7 @@ def main(args, device):
                 )
         else:
             flog.write("epoch,train_loss,sampled,valid")
-            for epoch in tqdm(range(epoch_start, epoch_start + args.e), desc="train iter"):
+            for epoch in range(epoch_start, epoch_start + args.e):
                 avg_loss = train_epoch(model, optimizer, dataloader, config, device)
                 samples = sample(model, i2c, c2i, device, batch_size=args.b, max_len=config['max_len'])
                 valid = count_valid_samples(samples)
