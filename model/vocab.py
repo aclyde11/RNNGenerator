@@ -18,7 +18,7 @@ def get_vocab_from_file(fname):
     def c2i(c):
         return vocab_c2i[c]
 
-    return vocab, c2i, i2c
+    return vocab, c2i, i2c, vocab_c2i, vocab_i2c
 
 #
 # Generates a random permutations of smile strings.
@@ -85,7 +85,7 @@ def main(args):
     # seconnd step is to make data:
     count_=count
     count = 0
-    _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
+    _, c2i, _, _, _ = get_vocab_from_file(args.o + '/vocab.txt')
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
             with multiprocessing.Pool(args.n) as p:

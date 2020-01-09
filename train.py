@@ -30,7 +30,7 @@ def count_valid_samples(smiles):
 
 def samplegen(y, c2i):
     y = y.split(",")
-    return torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)), torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i(END_CHAR)], dtype=np.int64))
+    return torch.from_numpy(np.array([c2i[START_CHAR]] + list(map(lambda x: int(x), y)), dtype=np.int64)), torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i[END_CHAR]], dtype=np.int64))
 
 
 def get_input_data(fname, c2i):
@@ -124,9 +124,9 @@ def train_epoch(model, optimizer, dataloader, config, device):
 def main(args, device):
     config, args = getconfig(args)
     print("loading data.")
-    vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
+    vocab, c2i, i2c, dc2i, di2c = get_vocab_from_file(args.i + "/vocab.txt")
     print("Vocab size is", len(vocab))
-    s, e = get_input_data(args.i + "/out.txt", c2i)
+    s, e = get_input_data(args.i + "/out.txt", dc2i)
     input_data = ToyDataset(s, e)
     print("Done.")
 
