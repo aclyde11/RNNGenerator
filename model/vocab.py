@@ -56,31 +56,31 @@ def main(args):
             randomSmiles('CNOPc1ccccc1', 10)
         except:
             print("Must set --permute_smiles to 0, cannot import RdKit. Smiles validity not being checked either.")
-    #
-    # #first step generate vocab.
-    # count = 0
-    # vocab = set()
-    # vocab.update([START_CHAR, END_CHAR])
-    # print(vocab)
-    # with open(args.i, 'r') as f:
-    #     for line in f:
-    #         smi = line.strip()
-    #         count += 1
-    #         if len(smi) > args.maxlen - 2:
-    #             continue
-    #         vocab.update(smi)
-    #
-    # vocab = list(vocab)
-    # with open(args.o + '/vocab.txt', 'w') as f:
-    #     for v in vocab:
-    #         f.write(v + '\n')
-    #
-    #
-    # print("Read ", count,"smiles.")
-    # print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
 
-    #seconnd step is to make data:
-    # count_=count
+    if args.start:
+        count = 0
+        vocab = set()
+        vocab.update([START_CHAR, END_CHAR])
+        print(vocab)
+        with open(args.i, 'r') as f:
+            for line in f:
+                smi = line.strip()
+                count += 1
+                if len(smi) > args.maxlen - 2:
+                    continue
+                vocab.update(smi)
+
+        vocab = list(vocab)
+        with open(args.o + '/vocab.txt', 'w') as f:
+            for v in vocab:
+                f.write(v + '\n')
+
+
+        print("Read ", count,"smiles.")
+        print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
+
+    # seconnd step is to make data:
+    count_=count
     count = 0
     _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
     with open(args.i, 'r') as f:
@@ -114,6 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', type=str, required=True, help='output directory where preprocressed data and vocab will go')
     parser.add_argument('--maxlen', type=int, required=True, help='max length for smile strings to be')
     parser.add_argument('--permute_smiles', type=int, help='generates permutations of smiles', default=0)
+    parser.add_argument('--start', action='store_true')
     args = parser.parse_args()
     print(args)
     path = args.o

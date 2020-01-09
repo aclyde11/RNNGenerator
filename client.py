@@ -33,7 +33,7 @@ def GetFormatExtension(fname):
         base, ext = os.path.splitext(base)
         ext += ".gz"
     return ext
-
+d
 
 def main(argv=[__name__]):
 
