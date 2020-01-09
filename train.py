@@ -36,6 +36,7 @@ def samplegen(y, c2i):
 def get_input_data(fname, c2i):
     lines1 = []
     lines2 = []
+    print(c2i, fname)
     with open(fname, 'r') as f:
         with multiprocessing.Pool(8) as p:
             lines = filter(lambda x: len(x) != 0, map(lambda x: x.strip(), f))
