@@ -9,7 +9,6 @@ import torch.nn.utils.rnn
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
-from functools import partial
 import multiprocessing
 import config
 
@@ -28,24 +27,19 @@ def count_valid_samples(smiles):
             count += 1
     return count
 
-def samplegen(y, c2i):
-    y = y.split(",")
-    return torch.from_numpy(np.array([c2i[START_CHAR]] + list(map(lambda x: int(x), y)), dtype=np.int64)), torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i[END_CHAR]], dtype=np.int64))
-
 
 def get_input_data(fname, c2i):
-    lines1 = []
-    lines2 = []
-    print(c2i, fname)
-    with open(fname, 'r') as f:
-        with multiprocessing.Pool(8) as p:
-            lines = filter(lambda x: len(x) != 0, map(lambda x: x.strip(), f))
-            lines = p.imap_unordered(partial(samplegen, c2i=c2i), lines)
-            for i,j in tqdm(lines, desc='loading data'):
-                lines1.append(i)
-                lines2.append(j)
+    lines = open(fname, 'r').readlines()
+    lines = list(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), lines)))))
+
+    lines1 = [torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)) for y in
+              tqdm(lines)]
+    lines2 = [torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i(END_CHAR)], dtype=np.int64)) for y in
+              tqdm(lines)]
+    print("Read", len(lines2), "SMILES.")
 
     return lines1, lines2
+
 
 
 def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=150):
@@ -124,9 +118,9 @@ def train_epoch(model, optimizer, dataloader, config, device):
 def main(args, device):
     config, args = getconfig(args)
     print("loading data.")
-    vocab, c2i, i2c, dc2i, di2c = get_vocab_from_file(args.i + "/vocab.txt")
+    vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
     print("Vocab size is", len(vocab))
-    s, e = get_input_data(args.i + "/out.txt", dc2i)
+    s, e = get_input_data(args.i + "/out.txt", c2i)
     input_data = ToyDataset(s, e)
     print("Done.")
 

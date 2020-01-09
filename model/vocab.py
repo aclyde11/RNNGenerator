@@ -18,7 +18,7 @@ def get_vocab_from_file(fname):
     def c2i(c):
         return vocab_c2i[c]
 
-    return vocab, c2i, i2c, vocab_c2i, vocab_i2c
+    return vocab, c2i, i2c
 
 #
 # Generates a random permutations of smile strings.
