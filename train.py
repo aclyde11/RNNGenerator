@@ -29,13 +29,13 @@ def count_valid_samples(smiles):
 
 
 def get_input_data(fname, c2i):
-    lines = open(fname, 'r').readlines()
-    lines = list(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), lines)))))
+    lines1, lines2 = [], []
+    with open(fname, 'r') as f:
+        for y in tqdm(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), f))))):
+            tmp = list(map(lambda x: int(x), y))
+            lines1.append(torch.from_numpy(np.array([c2i(START_CHAR)] + tmp, dtype=np.int64)))
+            lines2.append(torch.from_numpy(np.array(tmp + [c2i(END_CHAR)], dtype=np.int64)))
 
-    lines1 = [torch.from_numpy(np.array([c2i(START_CHAR)] + list(map(lambda x: int(x), y)), dtype=np.int64)) for y in
-              tqdm(lines)]
-    lines2 = [torch.from_numpy(np.array(list(map(lambda x: int(x), y)) + [c2i(END_CHAR)], dtype=np.int64)) for y in
-              tqdm(lines)]
     print("Read", len(lines2), "SMILES.")
 
     return lines1, lines2
