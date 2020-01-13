@@ -118,7 +118,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
 def main(args, device):
     config, args = getconfig(args)
     print("loading data.")
-    vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
+    vocab, c2i, i2c, _, _ = get_vocab_from_file(args.i + "/vocab.txt")
     print("Vocab size is", len(vocab))
     s, e = get_input_data(args.i + "/out.txt", c2i)
     input_data = ToyDataset(s, e)
