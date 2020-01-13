@@ -122,4 +122,4 @@ if __name__ == '__main__':
         print("Creation of the directory %s failed. Maybe it already exists? I will overwrite :)" % path)
     else:
         print("Successfully created the directory %s " % path)
-    main(args)
+    main(args, args.maxlen)
