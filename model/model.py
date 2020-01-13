@@ -146,7 +146,7 @@ class CharRNN(nn.Module):
         super(CharRNN, self).__init__()
         self.max_len = max_len
         self.emb  = nn.Embedding(vocab_size, emb_size)
-        self.lstm = nn.LSTM(emb_size, 256, dropout=0.2, num_layers=4, bidirectional=True)
+        self.lstm = nn.LSTM(emb_size, 256, dropout=0.1, num_layers=3, bidirectional=True)
         self.linear = nn.Linear(256 * 2, vocab_size)
 
     # pass x as a pack padded sequence please.
