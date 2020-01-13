@@ -3,7 +3,6 @@ import os
 from tqdm import tqdm
 from functools import partial
 import multiprocessing
-import config
 START_CHAR = '%'
 END_CHAR = '^'
 
