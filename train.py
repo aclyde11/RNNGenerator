@@ -129,7 +129,7 @@ def main(args, device):
                                              collate_fn=mycollate)
 
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=5e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
     epoch_start = 0
     if args.ct:
