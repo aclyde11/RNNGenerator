@@ -29,14 +29,15 @@ def count_valid_samples(smiles):
 
 
 def get_input_data(fname, c2i):
-    lines1, lines2 = [], []
     with open(fname, 'r') as f:
+        lines1 = []
+        lines2 = []
         for y in tqdm(map(lambda x: x.split(','), (filter(lambda x: len(x) != 0, map(lambda x: x.strip(), f))))):
-            tmp = list(map(lambda x: int(x), y))
-            lines1.append(torch.from_numpy(np.array([c2i(START_CHAR)] + tmp, dtype=np.int64)))
-            lines2.append(torch.from_numpy(np.array(tmp + [c2i(END_CHAR)], dtype=np.int64)))
+            maps = list(map(lambda x: int(x), y))
+            lines1.append(torch.from_numpy(np.array([c2i(START_CHAR)] + maps, dtype=np.int64)))
+            lines2.append(torch.from_numpy(np.array(maps + [c2i(END_CHAR)], dtype=np.int64)))
+        print("Read", len(lines2), "SMILES.")
 
-    print("Read", len(lines2), "SMILES.")
 
     return lines1, lines2
 
@@ -46,15 +47,17 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=320)
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((6, batch_size, 256)).to(device)
-        h_0 = torch.zeros((6, batch_size, 256)).to(device)
+        # c_0 = torch.zeros((2, batch_size, 256)).to(device)
+        h_0 = torch.zeros((2, batch_size, 256)).to(device)
+
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
-            o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
+            # o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
+            o, h_0 = model.lstm(x_emb, h_0)
             y = model.linear(o.squeeze(0))
             y = F.softmax(y / temp, dim=-1)
             w = torch.multinomial(y, 1).squeeze()

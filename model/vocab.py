@@ -58,6 +58,7 @@ def main(args, maxlen):
         except:
             print("Must set --permute_smiles to 0, cannot import RdKit. Smiles validity not being checked either.")
 
+
     if args.start:
         count = 0
         vocab = set()
@@ -79,11 +80,13 @@ def main(args, maxlen):
 
         print("Read ", count,"smiles.")
         print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
+    _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
+
 
     # seconnd step is to make data:
     count_=count
     count = 0
-    _, c2i, _, _, _ = get_vocab_from_file(args.o + '/vocab.txt')
+
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
             with multiprocessing.Pool(args.n) as p:
@@ -111,8 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', type=str, required=True, help='output directory where preprocressed data and vocab will go')
     parser.add_argument('--permute_smiles', type=int, help='generates permutations of smiles', default=0)
     parser.add_argument('--start', action='store_true')
-    parser.add_argument('--maxlen', type=int, default=318)
-    parser.add_argument('-n', default=1, type=int)
+
     args = parser.parse_args()
     print(args)
     path = args.o
