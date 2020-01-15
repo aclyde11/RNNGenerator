@@ -1,7 +1,8 @@
 import argparse
 import os
 from tqdm import tqdm
-
+from functools import partial
+import multiprocessing
 START_CHAR = '%'
 END_CHAR = '^'
 
@@ -16,7 +17,7 @@ def get_vocab_from_file(fname):
     def c2i(c):
         return vocab_c2i[c]
 
-    return vocab, c2i, i2c
+    return vocab, c2i, i2c, vocab_c2i, vocab_i2c
 
 #
 # Generates a random permutations of smile strings.
@@ -50,14 +51,14 @@ def randomSmiles(smi, max_len=150, attempts=100):
         return [smi]
 
 
-def main(args):
+def main(args, maxlen):
     if args.permute_smiles != 0:
         try:
             randomSmiles('CNOPc1ccccc1', 10)
         except:
             print("Must set --permute_smiles to 0, cannot import RdKit. Smiles validity not being checked either.")
 
-    #first step generate vocab.
+
     if args.start:
         count = 0
         vocab = set()
@@ -81,41 +82,39 @@ def main(args):
         print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
     _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
 
+
     # seconnd step is to make data:
     count_=count
     count = 0
+
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
-            for line in tqdm(f):
-                smis = line.strip()
-                if args.permute_smiles != 0:
-                    smis = randomSmiles(smis, max_len=args.maxlen, attempts=args.permute_smiles)
+            with multiprocessing.Pool(args.n) as p:
+                smiss = p.imap_unordered(partial(randomSmiles, max_len=maxlen, attempts=args.permute_smiles),
+                                        map(lambda x : x.strip(), f))
+                for smis in tqdm(smiss):
                     if smis is None:
                         continue
-                else:
-                    smis = [smis]
-                for smi in smis:
-                    if len(smi) > args.maxlen - 2:
-                        continue
-
-                    # convert to index number
-                    try:
-                        i = list(map(lambda x : str(c2i(x)), smi))
-
-                        o.write(','.join(i) + '\n')
-                        count += 1
-                    except:
-                        print("key error did not print.", count)
-                        continue
+                    for smi in smis:
+                        if len(smi) > maxlen - 2:
+                            continue
+                        try:
+                            i = list(map(lambda x : str(c2i(x)), smi))
+                            if i is not None:
+                                o.write(','.join(i) + '\n')
+                                count += 1
+                        except:
+                            print("key error did not print.", count)
+                            continue
     print("Output",count,"smiles.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', type=str, required=True, help='input file with single smile per line')
     parser.add_argument('-o', type=str, required=True, help='output directory where preprocressed data and vocab will go')
-    parser.add_argument('--maxlen', type=int, required=True, help='max length for smile strings to be')
     parser.add_argument('--permute_smiles', type=int, help='generates permutations of smiles', default=0)
     parser.add_argument('--start', action='store_true')
+
     args = parser.parse_args()
     print(args)
     path = args.o
@@ -125,4 +124,4 @@ if __name__ == '__main__':
         print("Creation of the directory %s failed. Maybe it already exists? I will overwrite :)" % path)
     else:
         print("Successfully created the directory %s " % path)
-    main(args)
+    main(args, args.maxlen)
