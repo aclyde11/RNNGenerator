@@ -52,7 +52,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((2, batch_size, 256)).to(device)
+        c_0 = torch.zeros((4, batch_size, 256)).to(device)
         # h_0 = torch.zeros((2, batch_size, 256)).to(device)
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
