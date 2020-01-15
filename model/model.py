@@ -34,7 +34,7 @@ class EncoderCharRNN(nn.Module):
         self.max_len = max_len
         self.emb  = nn.Embedding(vocab_size, emb_size)
         self.emb.weight.requires_grad = False
-        self.lstm = nn.RNN(emb_size, 256, bidirectional=True, dropout=0, num_layers=2)
+        self.lstm = nn.RNN(emb_size, 256, bidirectional=True, dropout=0, num_layers=4)
         self.linear1 = nn.Linear(256, z_dim)
         self.linear2 = nn.Linear(256, z_dim)
 
@@ -146,7 +146,7 @@ class CharRNN(nn.Module):
         super(CharRNN, self).__init__()
         self.max_len = max_len
         self.emb  = nn.Embedding(vocab_size, emb_size)
-        self.lstm = nn.LSTM(emb_size, 256, dropout=0.3, num_layers=2)
+        self.lstm = nn.GRU(emb_size, 256, dropout=0.1, num_layers=4)
         self.linear = nn.Linear(256, vocab_size)
 
     # pass x as a pack padded sequence please.
