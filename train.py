@@ -189,7 +189,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
-    parser.add_argument('--ct', help='continue training for longer', type=bool, default=False)
+    parser.add_argument('--ct', help='continue training for longer',action='store_true')
     parser.add_argument('-e', type=int, required=False, default=None)
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
