@@ -61,6 +61,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
         for i in range(1, max_len):
             x_emb = model.emb(x[i - 1, :]).unsqueeze(0)
             o, (h_0, c_0) = model.lstm(x_emb, (h_0, c_0))
+            # o, h_0 = model.lstm(x_emb, h_0)
             y = model.linear(o.squeeze(0))
             y = F.softmax(y / temp, dim=-1)
             w = torch.multinomial(y, 1).squeeze()
