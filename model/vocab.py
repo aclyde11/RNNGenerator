@@ -84,7 +84,7 @@ def main(args):
 
     count = 0
 
-    _, c2i, _ = get_vocab_from_file(args.o + '/vocab.txt')
+    _, c2i, _, _, _ = get_vocab_from_file(args.o + '/vocab.txt')
 
 
     # seconnd step is to make data:
@@ -100,7 +100,7 @@ def main(args):
                     if smis is None:
                         continue
                     for smi in smis:
-                        if len(smi) > maxlen - 2:
+                        if len(smi) > args.maxlen - 2:
                             continue
                         try:
                             i = list(map(lambda x : str(c2i(x)), smi))
