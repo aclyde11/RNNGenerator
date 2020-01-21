@@ -51,7 +51,7 @@ def randomSmiles(smi, max_len=150, attempts=100):
         return [smi]
 
 
-def main(args, maxlen):
+def main(args):
     if args.permute_smiles != 0:
         try:
             randomSmiles('CNOPc1ccccc1', 10)
@@ -94,7 +94,7 @@ def main(args, maxlen):
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
             with multiprocessing.Pool(args.n) as p:
-                smiss = p.imap(partial(randomSmiles, max_len=maxlen, attempts=args.permute_smiles),
+                smiss = p.imap(partial(randomSmiles, max_len=args.maxlen, attempts=args.permute_smiles),
                                         map(lambda x : x.strip(), f))
                 for smis in tqdm(smiss):
                     if smis is None:
