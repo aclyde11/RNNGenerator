@@ -9,7 +9,6 @@ import torch.nn.utils.rnn
 import torch.nn.functional as F
 from tqdm import tqdm
 import os
-import multiprocessing
 
 def getconfig(args):
     return args
@@ -36,7 +35,6 @@ def get_input_data(fname, c2i):
             lines1.append(torch.from_numpy(np.array([c2i(START_CHAR)] + maps, dtype=np.int64)))
             lines2.append(torch.from_numpy(np.array(maps + [c2i(END_CHAR)], dtype=np.int64)))
         print("Read", len(lines2), "SMILES.")
-
 
     return lines1, lines2
 
@@ -145,7 +143,7 @@ def main(args, device):
         if args.e is None:
             flog.write("epoch,train_loss,sampled,valid")
             for epoch in range(epoch_start, args.e):
-                avg_loss = train_epoch(model, optimizer, dataloader, config, device)
+                avg_loss = train_epoch(model, optimizer, dataloader, args, device)
                 samples = sample(model, i2c, c2i, device, batch_size=args.b , max_len=args.maxlen)
                 valid = count_valid_samples(samples)
                 print(samples)
