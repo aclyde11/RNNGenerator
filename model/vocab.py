@@ -94,7 +94,7 @@ def main(args, maxlen):
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
             with multiprocessing.Pool(args.n) as p:
-                smiss = p.imap_unordered(partial(randomSmiles, max_len=maxlen, attempts=args.permute_smiles),
+                smiss = p.imap(partial(randomSmiles, max_len=maxlen, attempts=args.permute_smiles),
                                         map(lambda x : x.strip(), f))
                 for smis in tqdm(smiss):
                     if smis is None:
@@ -118,10 +118,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', type=str, required=True, help='output directory where preprocressed data and vocab will go')
     parser.add_argument('--start', action='store_true')
     parser.add_argument('--maxlen', type=int, required=True, help='max length for smile strings to be')
-
     parser.add_argument('--permute_smiles', type=int, help='generates permutations of smiles', default=0)
-    parser.add_argument('--start', action='store_true')
-
+    parser.add_argument('-p', type=int, required=False, default=1)
     args = parser.parse_args()
     print(args)
     path = args.o
