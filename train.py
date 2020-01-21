@@ -10,10 +10,9 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import os
 import multiprocessing
-import config
 
 def getconfig(args):
-    return config.config, args
+    return args
 
 def count_valid_samples(smiles):
     from rdkit import Chem
@@ -95,7 +94,7 @@ class ToyDataset(torch.utils.data.Dataset):
         return self.s[item], self.e[item]
 
 
-def train_epoch(model, optimizer, dataloader, config, device):
+def train_epoch(model, optimizer, dataloader, args, device):
     model.train()
     lossf = nn.CrossEntropyLoss().to(device)
     losses = []
@@ -106,10 +105,10 @@ def train_epoch(model, optimizer, dataloader, config, device):
         y = [x.to(device) for x in y]
         batch_size = len(y)
         packed_seq_hat, _ = nn.utils.rnn.pad_packed_sequence(nn.utils.rnn.pack_sequence(y_hat, enforce_sorted=False),
-                                                             total_length=config['max_len'])
+                                                             total_length=args.maxlen)
         pred = model(y)
         packed_seq_hat = packed_seq_hat.view(-1).long()
-        pred = pred.view(batch_size * config['max_len'], -1)
+        pred = pred.view(batch_size * args.maxlen, -1)
         loss = lossf(pred, packed_seq_hat.to(device)).mean()
         loss.backward()
         losses.append(loss.item())
@@ -119,7 +118,7 @@ def train_epoch(model, optimizer, dataloader, config, device):
 
 
 def main(args, device):
-    config, args = getconfig(args)
+    args = getconfig(args)
     print("loading data.")
     vocab, c2i, i2c, _, _ = get_vocab_from_file(args.i + "/vocab.txt")
     print("Vocab size is", len(vocab))
@@ -131,7 +130,7 @@ def main(args, device):
     dataloader = torch.utils.data.DataLoader(input_data, pin_memory=True, batch_size=args.b,
                                              collate_fn=mycollate)
 
-    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
+    model = CharRNN(len(vocab), len(vocab), max_len=args.maxlen).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
     epoch_start = 0
@@ -145,9 +144,9 @@ def main(args, device):
     with open(args.logdir + "/training_log.csv", 'w') as flog:
         if args.e is None:
             flog.write("epoch,train_loss,sampled,valid")
-            for epoch in range(epoch_start, config['epochs']):
+            for epoch in range(epoch_start, args.e):
                 avg_loss = train_epoch(model, optimizer, dataloader, config, device)
-                samples = sample(model, i2c, c2i, device, batch_size=args.b , max_len=config['max_len'])
+                samples = sample(model, i2c, c2i, device, batch_size=args.b , max_len=args.maxlen)
                 valid = count_valid_samples(samples)
                 print(samples)
                 print("Total valid samples:", valid, float(valid) / 1024)
@@ -185,6 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
     parser.add_argument('--ct', help='continue training for longer',action='store_true')
     parser.add_argument('-e', type=int, required=False, default=None)
+    parser.add_argument('--maxlen', type=int, required=True, default=None)
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():

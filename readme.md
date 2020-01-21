@@ -47,7 +47,7 @@ embedding = {23 : [0.234, ..., 456.32], 34 : [34.34, ..., 0.3432]}
 This can be done by 
 ```shell
 emacs config.py #verify this is correct for your run. Must stay constant for entire exp. 
-python model/vocab.py -i mosesrun/smiles.txt -o mosesrun --maxlen 318 --permute_smiles 5 --start 
+python model/vocab.py -i mosesrun/smiles.txt -o mosesrun --maxlen 318 --permute_smiles 5 --start -p 8 # use eight threads
 ```
 take note the parameters maxlen as it must be kept constant. In general we set vocab size to something a bit bigger than this script reports just in case we encouter some strange variable down the road. Also take that with the permute_smiles options we turned 1.5M Chembl smiles into 10M smiles by rearranging the smiles. This may take awhile, and start says to rebuild vocab.
 
