@@ -47,8 +47,8 @@ def sample(model, i2c, c2i, device, z_dim=2, temp=1, batch_size=10, max_len=320)
     model.eval()
     with torch.no_grad():
 
-        c_0 = torch.zeros((3, batch_size, 256)).to(device)
-        h_0 = torch.zeros((3, batch_size, 256)).to(device)
+        c_0 = torch.zeros((4, batch_size, 256)).to(device)
+        h_0 = torch.zeros((4, batch_size, 256)).to(device)
 
         x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
@@ -183,8 +183,8 @@ if __name__ == '__main__':
     parser.add_argument('-i', help='Data from vocab folder', type=str, required=True)
     parser.add_argument('-b', help='batch size', type=int, default=256)
     parser.add_argument('--logdir', help='place to store things.', type=str, required=True)
-    parser.add_argument('--ct', help='continue training for longer', type=bool, default=False)
-    parser.add_argument('-e', type=int, default=10)
+    parser.add_argument('--ct', help='continue training for longer',action='store_true')
+    parser.add_argument('-e', type=int, required=False, default=None)
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
