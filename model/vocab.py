@@ -93,7 +93,7 @@ def main(args):
 
     with open(args.i, 'r') as f:
         with open(args.o + '/out.txt', 'w') as o:
-            with multiprocessing.Pool(args.n) as p:
+            with multiprocessing.Pool(args.p) as p:
                 smiss = p.imap(partial(randomSmiles, max_len=args.maxlen, attempts=args.permute_smiles),
                                         map(lambda x : x.strip(), f))
                 for smis in tqdm(smiss):
