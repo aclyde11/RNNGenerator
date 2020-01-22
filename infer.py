@@ -82,7 +82,7 @@ def main(args, device):
     print("loading data.")
     vocab, c2i, i2c, _, _ = get_vocab_from_file(args.i + "/vocab.txt")
 
-    model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
+    model = CharRNN(len(vocab), max_len=args.maxlen).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     pt = torch.load(args.logdir + "/autosave.model.pt", map_location=device)
@@ -95,10 +95,10 @@ def main(args, device):
     smiles = set()
     start = time.time()
 
-    batch_size = args.batch_size if args.batch_size > 1 else config['batch_size']
+    batch_size = args.batch_size
 
     for epoch in range(int(args.n / batch_size)):
-        samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=config['max_len'], temp=args.t)
+        samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=args.maxlen, temp=args.t)
         samples = list(map(lambda x: x[1:-1], samples))
         total_sampled += len(samples)
         if args.vb or args.vr:
