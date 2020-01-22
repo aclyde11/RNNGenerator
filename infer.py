@@ -82,7 +82,7 @@ def main(args, device):
     print("loading data.")
     vocab, c2i, i2c, _, _ = get_vocab_from_file(args.i + "/vocab.txt")
 
-    model = CharRNN(len(vocab), max_len=args.maxlen).to(device)
+    model = CharRNN(len(vocab), len(vocab), max_len=args.maxlen).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     pt = torch.load(args.logdir + "/autosave.model.pt", map_location=device)
