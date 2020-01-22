@@ -80,7 +80,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 def main(args, device):
     config = getconfig(args)
     print("loading data.")
-    vocab, c2i, i2c = get_vocab_from_file(args.i + "/vocab.txt")
+    vocab, c2i, i2c, _, _ = get_vocab_from_file(args.i + "/vocab.txt")
 
     model = CharRNN(config['vocab_size'], config['emb_size'], max_len=config['max_len']).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
