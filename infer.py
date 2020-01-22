@@ -138,7 +138,8 @@ if __name__ == '__main__':
     parser.add_argument('-vr', help='validate, uses rdkit', action='store_true')
     parser.add_argument('-vb', help='validate, uses openababel', action='store_true')
     parser.add_argument('-t', help='temperature', default=1.0, required=False, type=float)
-    parser.add_argument('--batch_size', default=-1, required=False, type=int)
+    parser.add_argument('--batch_size', default=128, required=False, type=int)
+    parser.add_argument('--maxlen', default=318, required=False, type=int)
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
