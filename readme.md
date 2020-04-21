@@ -66,7 +66,7 @@ python train.py -i mosesrun/ -b 1024 --logdir mosesrun/ -e 10  --ct
 
 ## Get some samples
 ```shell
-python train.py -i mosesrun/ -n 100 --vr -o samples.txt
+python infer.py -i mosesrun/ -n 100 --vr -o samples.txt
 ```
 
 ## Fine Tuning Steps
