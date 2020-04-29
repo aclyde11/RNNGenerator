@@ -157,7 +157,7 @@ def main(args, device):
                     }, args.logdir + "/autosave.model.pt"
                 )
         else:
-            flog.write("epoch,train_loss,sampled,valid")
+            flog.write("epoch,train_loss,sampled,valid\n")
             for epoch in range(epoch_start, epoch_start + args.e):
                 avg_loss = train_epoch(model, optimizer, dataloader, args, device)
                 samples = sample(model, i2c, c2i, device, batch_size=args.b, max_len=args.maxlen)
