@@ -3,6 +3,7 @@ import os
 from tqdm import tqdm
 from functools import partial
 import multiprocessing
+import selfies as sf
 START_CHAR = '%'
 END_CHAR = '^'
 
@@ -63,26 +64,16 @@ def main(args):
         count = 0
         vocab = set()
         vocab.update([START_CHAR, END_CHAR])
-        print(vocab)
-        with open(args.i, 'r') as f:
-            for line in f:
-                smi = line.strip()
-                count += 1
-                
-                if len(smi) > args.maxlen - 2:
-                    continue
-                vocab.update(smi)
+        vocab.update(sf.get_semantic_robust_alphabet())
         
-        vocab = list(vocab)
         with open(args.o + '/vocab.txt', 'w') as f:
             for v in vocab:
                 f.write(v + '\n')
  
               
-        print("Read ", count,"smiles.")
+        print("Read ", len(list(open(args.i, 'r'))), "smiles.")
         print("Vocab length: ", len(vocab), "Max len: ", args.maxlen)
 
-    count = 0
 
     _, c2i, _, _, _ = get_vocab_from_file(args.o + '/vocab.txt')
 
@@ -103,7 +94,8 @@ def main(args):
                         if len(smi) > args.maxlen - 2:
                             continue
                         try:
-                            i = list(map(lambda x : str(c2i(x)), smi))
+                            selfie = sf.encoder(smi)
+                            i = list(map(lambda x : str(c2i(x)), sf.split_selfies(selfie)))
                             if i is not None:
                                 o.write(','.join(i) + '\n')
                                 count += 1
