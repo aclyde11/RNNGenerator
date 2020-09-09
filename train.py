@@ -184,7 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', type=int, required=False, default=None)
     parser.add_argument('--maxlen', type=int, required=True, default=None)
     args = parser.parse_args()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
 
