@@ -1,4 +1,5 @@
 import argparse
+import selfies as sf
 from model.vocab import get_vocab_from_file, START_CHAR, END_CHAR
 from model.model import CharRNN
 import torch.utils.data
@@ -141,14 +142,18 @@ def main(args, device):
 
     with open(args.logdir + "/training_log.csv", 'w') as flog:
         if args.e is None:
-            flog.write("epoch,train_loss,sampled,valid")
+            flog.write("epoch,train_loss,sampled,valid,failed selfies\n")
             for epoch in range(epoch_start, args.e):
                 avg_loss = train_epoch(model, optimizer, dataloader, args, device)
                 samples = sample(model, i2c, c2i, device, batch_size=args.b , max_len=args.maxlen)
+                samples = [sf.decoder(s[1:-1]) for s in samples]
+                failed_selfies = len(samples)
+                samples = list(filter(lambda x: x is not None, samples))
+                failed_selfies = failed_selfies - len(samples)
                 valid = count_valid_samples(samples)
                 print(samples)
                 print("Total valid samples:", valid, float(valid) / 1024)
-                flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
+                flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid), str(failed_selfies)]) + "\n")
                 torch.save(
                     {
                         'state_dict' : model.state_dict(),
@@ -157,14 +162,30 @@ def main(args, device):
                     }, args.logdir + "/autosave.model.pt"
                 )
         else:
-            flog.write("epoch,train_loss,sampled,valid\n")
+            flog.write("epoch,train_loss,sampled,valid,failed selfies\n")
             for epoch in range(epoch_start, epoch_start + args.e):
                 avg_loss = train_epoch(model, optimizer, dataloader, args, device)
                 samples = sample(model, i2c, c2i, device, batch_size=args.b, max_len=args.maxlen)
+                
+                ssamples = []
+                failed_selfies = 0
+
+                for s in samples:
+                    try:
+                        smi = sf.decoder(s[1:-1])
+                        if smi is not None:
+                            ssamples.append(smi)
+                        else:
+                            failed_selfies += 1
+                    except:
+                        failed_selfies += 1
+
+                print("Finished")
+                samples = ssamples[:]
                 valid = count_valid_samples(samples)
                 print(samples)
                 print("Total valid samples:", valid, float(valid) / 1024)
-                flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid)]) + "\n")
+                flog.write( ",".join([str(epoch), str(avg_loss), str(len(samples)), str(valid), str(failed_selfies)]) + "\n")
                 torch.save(
                     {
                         'state_dict' : model.state_dict(),

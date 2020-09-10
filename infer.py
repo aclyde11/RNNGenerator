@@ -1,11 +1,13 @@
 import argparse
 import time
+import multiprocessing
 
 import pandas as pd
 import torch
 import torch.nn.functional as F
 import torch.nn.utils.rnn
 import torch.utils.data
+import selfies as sf
 
 from model.model import CharRNN
 from model.vocab import START_CHAR, END_CHAR
@@ -100,6 +102,8 @@ def main(args, device):
     for epoch in range(int(args.n / batch_size)):
         samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=args.maxlen, temp=args.t)
         samples = list(map(lambda x: x[1:-1], samples))
+        with multiprocessing.Pool(args.p) as pool:
+            samples = pool.map(sf.decoder, samples)
         total_sampled += len(samples)
         if args.vb or args.vr:
             valid_smiles, goods = count_valid_samples(samples, rdkit=args.vr)
@@ -138,6 +142,7 @@ if __name__ == '__main__':
     parser.add_argument('-vr', help='validate, uses rdkit', action='store_true')
     parser.add_argument('-vb', help='validate, uses openababel', action='store_true')
     parser.add_argument('-t', help='temperature', default=1.0, required=False, type=float)
+    parser.add_argument('-p', help='number of threads', default=1, required=False, type=int)
     parser.add_argument('--batch_size', default=128, required=False, type=int)
     parser.add_argument('--maxlen', default=318, required=False, type=int)
     args = parser.parse_args()
